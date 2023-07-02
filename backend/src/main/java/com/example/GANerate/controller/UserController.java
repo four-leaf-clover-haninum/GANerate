@@ -1,41 +1,55 @@
 package com.example.GANerate.controller;
 
-//import com.example.GANerate.config.SecurityConfig;
-import com.example.GANerate.dto.UserJoinRequest;
-import com.example.GANerate.dto.UserLoginRequest;
-import com.example.GANerate.entity.User;
-import com.example.GANerate.repository.UserRepository;
+import com.example.GANerate.request.UserRequest;
+import com.example.GANerate.response.CustomResponseEntity;
+import com.example.GANerate.response.UserResponse;
 import com.example.GANerate.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
-@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-
-    @PostMapping("/join")
-    public ResponseEntity<String> join(@RequestBody UserJoinRequest dto){
-        userService.join(dto.getUserId(), dto.getUserPw(), dto.getName(), dto.getEmail(), dto.getPhoneNum(), dto.getRole());
-        return ResponseEntity.ok().body("회원가입이 성공했습니다.");
+    //회원가입
+    @PostMapping("/auth/signup")
+    public CustomResponseEntity<UserResponse.signup> signup(
+            @RequestBody @Valid final UserRequest.signup request){
+        return CustomResponseEntity.success(userService.singup(request));
     }
 
-    //로그인된 유저에 대한 유저 아이디는 토큰에 있어서 요청시 유저 아이디가 필요 없음
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserLoginRequest dto){
-        String token = userService.login(dto.getUserId(), dto.getUserPw());
-        return ResponseEntity.ok().body(token);
-    }
-    @GetMapping("/list")
-    public ResponseEntity<User> find(Long id){
-        return ResponseEntity.ok().body(userService.find(id));
-    }
+    //로그인
+//    @PostMapping("/auth/singin")
+//    public CustomResponseEntity<UserResponse.signin> signin(
+//            @RequestBody @Valid final UserRequest.signin request){
+//        return CustomResponseEntity.success(userService.signin(request));
+//    }
+
+    //로그아웃
+//    @PostMapping("/auth/logout")
+//    public CustomResponseEntity<Boolean> logout(
+//            @AuthenticationPrincipal final String userEmail,
+//            @RequestHeader(value = "Authorization") String auth){
+//        return CustomResponseEntity.success(userService.logout(userEmail, auth.substring(7)))
+//    }
+
+
+    //유저 정보 조회
+
+
+    //프로필 수정
+
+
+    //좋아요 상품 조회
+
+
+    //구매 상품 조회
+
+
 
 
 }

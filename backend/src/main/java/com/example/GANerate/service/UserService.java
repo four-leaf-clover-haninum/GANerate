@@ -1,13 +1,17 @@
 package com.example.GANerate.service;
 
-import com.example.GANerate.entity.User;
-import com.example.GANerate.exception.AppException;
-import com.example.GANerate.exception.ErrorCode;
+import com.example.GANerate.domain.User;
+import com.example.GANerate.enumuration.Result;
+import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.UserRepository;
-import com.example.GANerate.utils.JwtTokenUtil;
+import com.example.GANerate.request.UserRequest;
+import com.example.GANerate.response.UserResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,51 +20,64 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder encoder;
+    private final PasswordEncoder passwordEncoder;
+//    private final TokenProvider tokenProvider;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
-    @Value("${jwt.token.secret}")
-    private String key;
-    private Long expireTimeMs = 1000*60*60l;
 
+    //회원가입
     @Transactional
-    public String join(String userId, String userPw, String name, String email, String phoneNum, String role){
+    public UserResponse.signup singup(UserRequest.signup request){
+        //아이디 중복 검사
+        validateDuplicatedUserEmail(request.getEmail());
 
-        //아이디 중복 체크
-        userRepository.findByUserId(userId).
-                ifPresent(user -> {
-                    throw new AppException(ErrorCode.USERID_DUPLICATED, userId + "는 이미 있습니다.");
-                });
         //저장
-        User user = User.builder()
-                .userId(userId)
-                .userPw(encoder.encode(userPw))
-                .name(name)
-                .email(email)
-                .phoneNum(phoneNum)
-                .role(role)
-                .build();
-        userRepository.save(user);
+        User user = userRepository.save(request.toEntity());
 
-        return "Success";
+        return UserResponse.signup.response(user);
     }
 
-    @Transactional
-    public String login(String userId, String userPw){
-        // userId 없음
-        User user = userRepository.findByUserId(userId).orElseThrow(() -> new AppException(ErrorCode.USERID_NOT_FOUND, userId + "가 없습니다."));
+    //로그인
+//    @Transactional(readOnly = true)
+//    public UserResponse.signin signin(UserRequest.signin request){
+//
+//        // 일치하는 userId 없음
+//        User user = userRepository.findByEmail(request.getEmail())
+//                .orElseThrow(() -> new CustomException(USERID_NOT_FOUND));
+//
+//        // password 틀림
+//        if(!passwordEncoder.matches(request.getUserPw(), user.getUserPw())){
+//            throw new CustomException(INVALID_PASSWORD);
+//        }
+//
+//        //앞에서 exception 안나면 access token 발행
+//        String accessToken = tokenProvider.createToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
+//
+//        return UserResponse.signin.response(user, accessToken, refreshToken);
+//    }
 
-        // password 틀림
-        if(!encoder.matches(userPw, user.getUserPw())){
-            throw new AppException(ErrorCode.INVALID_PASSWORD, "패스워드가 잘못되었습니다.");
+    private void validateDuplicatedUserEmail(String userEmail) {
+        Boolean existsByNickName = userRepository.existsByEmail(userEmail);
+        if (existsByNickName) {
+            throw new CustomException(Result.USERID_DUPLICATED);
         }
-
-        //앞에서 exception 안나면 토큰 발행
-        String token = JwtTokenUtil.createToken(user.getUserId(), key, expireTimeMs);
-        return token;
     }
 
-    @Transactional(readOnly = true)
-    public User find(Long id){
-        return userRepository.findById(id).get();
+    private Authentication getAuthentication(String email, String password) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(email, password);
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return authentication;
     }
+
+//    //로그아웃
+//    @Transactional(readOnly = true)
+//    public Boolean logout(String userEmail, String accessToken) {
+//        String email = getUser(userId).getEmail();
+//        Long accessTokenExpiration = tokenProvider.getExpiration(accessToken);
+//
+//        return redisService.logoutFromRedis(email, accessToken, accessTokenExpiration);
+//    }
+
 }
