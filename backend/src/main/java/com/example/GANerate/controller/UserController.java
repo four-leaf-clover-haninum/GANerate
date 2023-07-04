@@ -19,23 +19,17 @@ public class UserController {
     @PostMapping("/auth/signup")
     public CustomResponseEntity<UserResponse.signup> signup(
             @RequestBody @Valid final UserRequest.signup request){
-        return CustomResponseEntity.success(userService.singup(request));
+        return CustomResponseEntity.success(userService.signup(request));
     }
 
     //로그인
-//    @PostMapping("/auth/singin")
-//    public CustomResponseEntity<UserResponse.signin> signin(
-//            @RequestBody @Valid final UserRequest.signin request){
-//        return CustomResponseEntity.success(userService.signin(request));
-//    }
+    @PostMapping("/auth/signin")
+    public CustomResponseEntity<UserResponse.signin> signin(
+            @RequestBody @Valid final UserRequest.signin request){
+        return CustomResponseEntity.success(userService.signin(request));
+    }
 
-    //로그아웃
-//    @PostMapping("/auth/logout")
-//    public CustomResponseEntity<Boolean> logout(
-//            @AuthenticationPrincipal final String userEmail,
-//            @RequestHeader(value = "Authorization") String auth){
-//        return CustomResponseEntity.success(userService.logout(userEmail, auth.substring(7)))
-//    }
+
 
 
     //유저 정보 조회
