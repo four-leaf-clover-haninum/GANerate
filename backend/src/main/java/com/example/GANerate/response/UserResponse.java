@@ -47,6 +47,13 @@ public class UserResponse {
             this.refreshToken = refreshToken;
         }
 
+        public static UserResponse.signin response(User user, String atk) {
+            return UserResponse.signin.builder()
+                    .email(user.getEmail())
+                    .accessToken(atk)
+                    .build();
+        }
+
         public static UserResponse.signin response(User user, String atk, String rtk) {
             return UserResponse.signin.builder()
                     .email(user.getEmail())
