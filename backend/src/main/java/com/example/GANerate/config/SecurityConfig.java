@@ -1,54 +1,77 @@
 package com.example.GANerate.config;
 
-import com.example.GANerate.repository.UserRepository;
-import com.example.GANerate.service.UserService;
+import com.example.GANerate.config.jwt.*;
+
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
-public class SecurityConfig {
-    private final UserService userService;
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${jwt.token.secret}")
-    private String secretKey;
-//
-//    @Autowired
-//    private CorsConfig corsConfig;
+    private TokenProvider tokenProvider;
+//    private CorsFilter corsFilter;
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-//    @Bean
-//    public AuthenticationManager authenticationManager() throws Exception {
-//        return authenticationConfiguration.getAuthenticationManager();
-//    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
-        //REST API를 위한 설정
-        return httpSecurity
-                .httpBasic().disable()//기본 설정 사용 x, 요청 헤더에 id, pw를 보내는 방식임
-                .csrf().disable()//csrf 공격 방어 해제(rest api에서는 csrf 필용 x)
-                .cors().and()
-                .authorizeRequests()//URL에 따른 페이지 권한 부여 시작
-                .antMatchers("/users/join", "/users/login","/main/**").permitAll() //join, login, /main/~~은 토큰 없어도 가능
-                .anyRequest().authenticated() //그 외의 url은 인증 필요
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)//세션 사용 x, 서버 무상태 유지
-                .and()
-                .addFilterBefore(new JwtFilter(userService, secretKey), UsernamePasswordAuthenticationFilter.class)
-                .build();
+    @Autowired
+    public SecurityConfig(
+            TokenProvider tokenProvider,
+//            CorsFilter corsFilter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+        this.tokenProvider = tokenProvider;
+//        this.corsFilter = corsFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
     }
 
 
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+
+    @Override
+    protected void configure(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .httpBasic().disable()//기본 설정 사용 x, 요청 헤더에 id, pw를 보내는 방식임
+                .csrf().disable()
+//                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+                .cors().and()
+                .exceptionHandling()
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler)
+
+
+
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
+                .and()
+                .authorizeRequests()//HttpServletRequest를 사용하는 요청들에 대한 접근 제한 설정
+                .antMatchers("/auth/signup", "/auth/signin","/main/**").permitAll()
+                .anyRequest().authenticated()//위에서 지정한 요청 외는 모두 인증 필요
+
+                .and()
+                .apply(new JwtSecurityConfig(tokenProvider));
+
+    }
 }
