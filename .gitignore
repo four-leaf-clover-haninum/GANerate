@@ -40,3 +40,5 @@ out/
 
 backend/src/main/resources/application.yml
 backend/src/main/resources/data.sql
+src/main/resources/application.yml
+src/main/resources/data.sql
