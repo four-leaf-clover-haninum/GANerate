@@ -1,6 +1,7 @@
 package com.example.GANerate.service;
 
 import com.example.GANerate.config.jwt.TokenProvider;
+import com.example.GANerate.config.redis.RedisUtil;
 import com.example.GANerate.domain.Authority;
 import com.example.GANerate.domain.User;
 import com.example.GANerate.enumuration.Result;
@@ -8,6 +9,7 @@ import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.UserRepository;
 import com.example.GANerate.request.UserRequest;
 import com.example.GANerate.response.UserResponse;
+import io.netty.util.internal.ObjectUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final RedisUtil redisUtil;
 
 
     //회원가입
@@ -64,8 +68,18 @@ public class UserService {
 
         //앞에서 exception 안나면 access token 발행
         String accessToken = tokenProvider.createToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
-        //String refreshToken = tokenProvider.createRefreshToken(user.getId());
-        return UserResponse.signin.response(user, accessToken);
+        String refreshToken = tokenProvider.createRefreshToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
+        return UserResponse.signin.response(user, accessToken, refreshToken);
+    }
+
+    @Transactional
+    public UserResponse.reissue reissue(UserRequest.reissue request){
+
+        String accessToken = tokenProvider.reissue(request);
+
+        return UserResponse.reissue.builder()
+                .accessToken(accessToken)
+                .build();
     }
 
     //전체 유저 조회

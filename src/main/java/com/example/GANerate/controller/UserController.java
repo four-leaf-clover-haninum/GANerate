@@ -44,6 +44,12 @@ public class UserController {
         return CustomResponseEntity.success(userService.signin(request));
     }
 
+    //access 토큰 만료 o, refresh token 만료 x => access token 재발급
+    @PostMapping("/auth/reissue")
+    public CustomResponseEntity<UserResponse.reissue> reissue(@RequestBody @Valid final UserRequest.reissue request){
+        return CustomResponseEntity.success(userService.reissue(request));
+    }
+
     //로그아웃
 
 

@@ -89,5 +89,15 @@ public class UserRequest {
             return lst;
         }
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class reissue {
+        @NotBlank(message = "accessToken 을 입력해주세요.")
+        private String accessToken;
+
+        @NotBlank(message = "refreshToken 을 입력해주세요.")
+        private String refreshToken;
+    }
 }
 

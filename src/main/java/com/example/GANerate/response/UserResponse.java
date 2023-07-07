@@ -65,16 +65,27 @@ public class UserResponse {
 
     @NoArgsConstructor
     @Getter
+    public static class reissue {
+        private String accessToken;
+
+        @Builder
+        private reissue(String accessToken){
+            this.accessToken=accessToken;
+        }
+    }
+
+    @NoArgsConstructor
+    @Getter
     public static class userAll {
         private String email;
         private String name;
         private String phoneNum;
 
         @Builder
-        private userAll(String email, String name, String phoneNum){
-            this.email=email;
-            this.name=name;
-            this.phoneNum=phoneNum;
+        private userAll(String email, String name, String phoneNum) {
+            this.email = email;
+            this.name = name;
+            this.phoneNum = phoneNum;
         }
 
         public static UserResponse.userAll response(User user) {
@@ -85,5 +96,4 @@ public class UserResponse {
                     .build();
         }
     }
-
 }
