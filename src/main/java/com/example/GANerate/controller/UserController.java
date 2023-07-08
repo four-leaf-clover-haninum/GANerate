@@ -25,6 +25,13 @@ public class UserController {
         return CustomResponseEntity.success(userService.signup(request));
     }
 
+    //로그인
+    @PostMapping("/auth/signin")
+    public CustomResponseEntity<UserResponse.signin> signin(
+            @RequestBody @Valid final UserRequest.signin request){
+        return CustomResponseEntity.success(userService.signin(request));
+    }
+
     //이메일 전송
     @PostMapping("/auth/email")
     public CustomResponseEntity<String> sendEmail(@RequestBody @Valid final UserRequest.emailAuth request) {
@@ -37,13 +44,6 @@ public class UserController {
         return CustomResponseEntity.success(emailService.checkNum(request));
     }
 
-    //로그인
-    @PostMapping("/auth/signin")
-    public CustomResponseEntity<UserResponse.signin> signin(
-            @RequestBody @Valid final UserRequest.signin request){
-        return CustomResponseEntity.success(userService.signin(request));
-    }
-
     //access 토큰 만료 o, refresh token 만료 x => access token 재발급
     @PostMapping("/auth/reissue")
     public CustomResponseEntity<UserResponse.reissue> reissue(@RequestBody @Valid final UserRequest.reissue request){
@@ -51,6 +51,11 @@ public class UserController {
     }
 
     //로그아웃
+    @PostMapping("/auth/logout")
+    public CustomResponseEntity<UserResponse.logout> logout(@RequestBody @Valid final UserRequest.logout request){
+        userService.logout(request);
+        return CustomResponseEntity.success();
+    }
 
 
     //유저 정보 조회
