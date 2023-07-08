@@ -9,7 +9,7 @@ public enum Result {
     LOGOUT_OK(0, "로그아웃 성공"),
     DELETE_OK(0, "회원 탈퇴 성공"),
     FAIL(-1, "실패"),
-    UNCORRECT_REQUEST(-2,"잘못된 요청"),
+    BAD_REQUEST(-2,"잘못된 요청"),
     NOT_USES_TOKEN(-2, "유효한 토큰이 존재하지 않습니다."),
 
     //유저
