@@ -101,7 +101,7 @@ public class TokenProvider {
         return refreshToken;
     }
 
-    // access Token 재발급
+    // access Token 재발급(재발급은 accessToken이 만료 되기 직전에 실행됨)
     public String reissue(UserRequest.reissue request){
 
         // 1. refresh token 검증
@@ -118,7 +118,10 @@ public class TokenProvider {
 
         // 로그아웃시 redis에 refresh token이 존재하지 않는 경우 처리
         if(ObjectUtils.isEmpty(refreshToken)){
-            throw new CustomException(Result.UNCORRECT_REQUEST);
+            throw new CustomException(Result.BAD_REQUEST);
+        }
+        if(!refreshToken.equals(request.getRefreshToken())) {
+            throw new CustomException(Result.INVALID_REFRESH_TOKEN);
         }
 
         // 4. 새로운 access token 생성
