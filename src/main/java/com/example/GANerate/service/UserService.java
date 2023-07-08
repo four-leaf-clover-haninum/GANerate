@@ -69,9 +69,14 @@ public class UserService {
         //앞에서 exception 안나면 access token 발행
         String accessToken = tokenProvider.createToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
         String refreshToken = tokenProvider.createRefreshToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
-        return UserResponse.signin.response(user, accessToken, refreshToken);
+        return UserResponse.signin.builder()
+                .email(request.getEmail())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 
+    // access Token 재발급
     @Transactional
     public UserResponse.reissue reissue(UserRequest.reissue request){
 
@@ -79,6 +84,32 @@ public class UserService {
 
         return UserResponse.reissue.builder()
                 .accessToken(accessToken)
+                .build();
+    }
+
+    //logout
+    @Transactional
+    public UserResponse.logout logout(UserRequest.logout request){
+        // 1. Access Token 검증
+        if (!tokenProvider.validateToken(request.getAccessToken())) {
+            throw new CustomException(Result.BAD_REQUEST);
+        }
+
+        // 2. Access Token 에서 User email 을 가져옵니다.
+        Authentication authentication = tokenProvider.getAuthentication(request.getAccessToken());
+
+        // 3. Redis 에서 해당 User email 로 저장된 Refresh Token 이 있는지 여부를 확인 후 있을 경우 삭제합니다.
+        if (redisUtil.getData(authentication.getName()) != null) {
+            // Refresh Token 삭제
+            redisUtil.deleteData(authentication.getName());
+        }
+
+        // 4. 해당 Access Token 유효시간 가지고 와서 BlackList 로 저장하기
+        Long expiration = tokenProvider.getExpiration(request.getAccessToken());
+        redisUtil.setDataExpire(request.getAccessToken(), "logout", expiration);
+
+        return UserResponse.logout.builder()
+                .userId(Long.valueOf(authentication.getName()))
                 .build();
     }
 
