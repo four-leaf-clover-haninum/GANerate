@@ -5,6 +5,7 @@ import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.request.UserRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Random;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class EmailService {
 
@@ -58,10 +60,12 @@ public class EmailService {
         String res = null;
         List<String> info = request.toEntity();
         String email = redisUtil.getData(info.get(1));
-        if (email == null) {
+        log.info(email);
+
+        if (email.equals(info.get(0))){ //equals 사용!!
+            res= "인증이 완료되었습니다";
+        }else{
             throw new CustomException(Result.UNCORRECT_CERTIFICATION_NUM);
-        } else if (email == info.get(0)) {
-            res = "인증이 완료되었습니다.";
         }
         return res;
     }
