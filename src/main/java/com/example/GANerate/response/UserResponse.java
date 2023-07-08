@@ -47,20 +47,20 @@ public class UserResponse {
             this.refreshToken = refreshToken;
         }
 
-        public static UserResponse.signin response(User user, String atk) {
-            return UserResponse.signin.builder()
-                    .email(user.getEmail())
-                    .accessToken(atk)
-                    .build();
-        }
-
-        public static UserResponse.signin response(User user, String atk, String rtk) {
-            return UserResponse.signin.builder()
-                    .email(user.getEmail())
-                    .accessToken(atk)
-                    .refreshToken(rtk)
-                    .build();
-        }
+//        public static UserResponse.signin response(User user, String atk) {
+//            return UserResponse.signin.builder()
+//                    .email(user.getEmail())
+//                    .accessToken(atk)
+//                    .build();
+//        }
+//
+//        public static UserResponse.signin response(User user, String atk, String rtk) {
+//            return UserResponse.signin.builder()
+//                    .email(user.getEmail())
+//                    .accessToken(atk)
+//                    .refreshToken(rtk)
+//                    .build();
+//        }
     }
 
     @NoArgsConstructor
@@ -88,12 +88,21 @@ public class UserResponse {
             this.phoneNum = phoneNum;
         }
 
-        public static UserResponse.userAll response(User user) {
-            return UserResponse.userAll.builder()
-                    .email(user.getEmail())
-                    .name(user.getName())
-                    .phoneNum(user.getPhoneNum())
-                    .build();
+//        public static UserResponse.userAll response(User user) {
+//            return UserResponse.userAll.builder()
+//                    .email(user.getEmail())
+//                    .name(user.getName())
+//                    .phoneNum(user.getPhoneNum())
+//                    .build();
+//        }
+    }
+    @NoArgsConstructor
+    @Getter
+    public static class logout {
+        private Long userId;
+        @Builder
+        private logout(Long userId) {
+            this.userId = userId;
         }
     }
 }
