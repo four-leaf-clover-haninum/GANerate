@@ -20,7 +20,9 @@ public enum Result {
     UNAUTHORITY_TOKEN(2204, "권한 정보가 없는 토큰"),
     FAIL_SEND_EMAIL(2205, "인증번호 전송 실패"),
     UNCORRECT_CERTIFICATION_NUM(2206, "올바르지 않은 인증번호"),
-    INVALID_REFRESH_TOKEN(2207, "올바르지 않은 refresh token");
+    INVALID_REFRESH_TOKEN(2207, "올바르지 않은 refresh token"),
+    UN_AUTHENTICATION_EMAIL(2208, "이메일 미인증")
+    ;
 
 
     //
