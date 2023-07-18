@@ -3,7 +3,7 @@ package com.example.GANerate.config.jwt;
 import com.example.GANerate.config.redis.RedisUtil;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
-import com.example.GANerate.request.UserRequest;
+import com.example.GANerate.request.user.UserRequest;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
