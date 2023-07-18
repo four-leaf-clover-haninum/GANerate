@@ -13,12 +13,14 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Category {
+public class  Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
     private Long id;
+
+    private int categoryCode;
 
     @NotNull
     private String title;
@@ -27,7 +29,8 @@ public class Category {
     private List<Product_Category> product_categories = new ArrayList<>();
 
     @Builder
-    public Category(String title){
+    public Category(int categoryCode, String title){
+        this.categoryCode = categoryCode;
         this.title=title;
     }
 }

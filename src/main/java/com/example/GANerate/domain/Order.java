@@ -35,9 +35,6 @@ public class Order {
 
     //연관관계 편의 메서드
     public void setUser(User user){
-        if (this.user != null){
-            this.user.getOrders().remove(this);
-        }
         this.user=user;
         user.getOrders().add(this);
     }

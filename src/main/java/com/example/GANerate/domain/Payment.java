@@ -34,7 +34,7 @@ public class Payment {
     @NotNull
     private String merchantUid;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "data_product_id")
     private DataProduct dataProduct;
 

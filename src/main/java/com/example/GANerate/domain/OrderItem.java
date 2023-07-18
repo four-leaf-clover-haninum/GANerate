@@ -23,9 +23,6 @@ public class OrderItem {
 
     // Order 연관관계 편의 메서드
     public void setOrder(Order order){
-        if (this.order!=null){
-            this.order.getOrderItems().remove(this);
-        }
         this.order=order;
         order.getOrderItems().add(this);
     }
