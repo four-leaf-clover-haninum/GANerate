@@ -33,6 +33,9 @@ public class User extends BaseEntity{
     @NotNull
     private String phoneNum;
 
+    @Column(name = "email_auth", columnDefinition = "INT DEFAULT 0")
+    private boolean emailAuth;
+
     // Autority와 User는 Many To Many 관계이기 때문에, Join Table이 필수적이다.
     // user_id, authority_name을 필드로 갖는 join 테이블이 생성된다.
     @ManyToMany
