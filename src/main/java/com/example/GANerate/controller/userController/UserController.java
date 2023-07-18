@@ -1,10 +1,10 @@
-package com.example.GANerate.controller;
+package com.example.GANerate.controller.userController;
 
-import com.example.GANerate.request.UserRequest;
+import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.CustomResponseEntity;
-import com.example.GANerate.response.UserResponse;
-import com.example.GANerate.service.EmailService;
-import com.example.GANerate.service.UserService;
+import com.example.GANerate.response.user.UserResponse;
+import com.example.GANerate.service.user.EmailService;
+import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +40,7 @@ public class UserController {
 
     //이메일 인증번호 인증
     @GetMapping("/auth/email")
-    public CustomResponseEntity<String> checkEmailNum(@RequestBody @Valid final UserRequest.emailNum request) {
+    public CustomResponseEntity<UserResponse.email> checkEmailNum(@RequestBody @Valid final UserRequest.emailNum request) {
         return CustomResponseEntity.success(emailService.checkNum(request));
     }
 
@@ -53,8 +53,7 @@ public class UserController {
     //로그아웃
     @PostMapping("/auth/logout")
     public CustomResponseEntity<UserResponse.logout> logout(@RequestBody @Valid final UserRequest.logout request){
-        userService.logout(request);
-        return CustomResponseEntity.success();
+        return CustomResponseEntity.success(userService.logout(request));
     }
 
 

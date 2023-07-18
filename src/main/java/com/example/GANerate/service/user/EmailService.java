@@ -1,9 +1,10 @@
-package com.example.GANerate.service;
+package com.example.GANerate.service.user;
 
 import com.example.GANerate.config.redis.RedisUtil;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
-import com.example.GANerate.request.UserRequest;
+import com.example.GANerate.request.user.UserRequest;
+import com.example.GANerate.response.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -56,17 +57,20 @@ public class EmailService {
     }
 
     //인증번호 대조
-    public String checkNum(UserRequest.emailNum request) {
-        String res = null;
+    @Transactional
+    public UserResponse.email checkNum(UserRequest.emailNum request) {
         List<String> info = request.toEntity();
         String email = redisUtil.getData(info.get(1));
         log.info(email);
 
+        // List에 이메일과 인증번호 둘다 넣은 이유는 다른 사람의 인증번호와 바뀌는 상황을 방지함.
         if (email.equals(info.get(0))){ //equals 사용!!
-            res= "인증이 완료되었습니다";
+            UserResponse.email emailAuth = UserResponse.email.builder()
+                    .emailAuth(true)
+                    .build();
+            return emailAuth;
         }else{
             throw new CustomException(Result.UNCORRECT_CERTIFICATION_NUM);
         }
-        return res;
     }
 }

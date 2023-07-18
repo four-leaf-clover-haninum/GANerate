@@ -1,4 +1,4 @@
-package com.example.GANerate.service;
+package com.example.GANerate.service.user;
 
 import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.config.redis.RedisUtil;
@@ -7,9 +7,8 @@ import com.example.GANerate.domain.User;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.UserRepository;
-import com.example.GANerate.request.UserRequest;
-import com.example.GANerate.response.UserResponse;
-import io.netty.util.internal.ObjectUtil;
+import com.example.GANerate.request.user.UserRequest;
+import com.example.GANerate.response.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,13 +18,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.example.GANerate.enumuration.Result.USERID_NOT_FOUND;
 
@@ -46,6 +43,11 @@ public class UserService {
     public UserResponse.signup signup(UserRequest.signup request){
         //아이디 중복 검사
         validateDuplicatedUserEmail(request.getEmail());
+
+        // 이메일 인증 검사
+        if(request.isEmailAuth()!=true){
+            throw new CustomException(Result.UN_AUTHENTICATION_EMAIL);
+        }
 
         //저장
         User user = userRepository.save(createEntityUserFromDto(request));

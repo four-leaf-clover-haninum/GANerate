@@ -1,4 +1,4 @@
-package com.example.GANerate.service;
+package com.example.GANerate.service.user;
 
 import com.example.GANerate.domain.User;
 import com.example.GANerate.repository.UserRepository;
