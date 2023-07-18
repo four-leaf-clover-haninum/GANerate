@@ -55,6 +55,9 @@ dependencies {
 
 	// test를 위한 embedded redis
 	implementation group: 'it.ozimov', name: 'embedded-redis', version: '0.7.2'
+
+	//AWS S3
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 }
 
 tasks.named('test') {
