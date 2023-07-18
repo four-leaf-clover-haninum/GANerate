@@ -134,7 +134,7 @@ public class UserService {
 
         /*
         스트림으로
-        List<User> all = userRepository.findAll();
+        List<User> all = userRepository.findDataProducts();
 
         return all.stream()
             .map(user -> UserResponse.userAll.builder()

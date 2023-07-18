@@ -17,7 +17,7 @@ public class CategoryController {
 
     //전체 카테고리 조회
     @GetMapping("/categories")
-    public CustomResponseEntity<List<CategoryResponse.CategoryList>> getCategories(){
-        return CustomResponseEntity.success(categoryService.getCategories());
+    public CustomResponseEntity<List<CategoryResponse.findCategories>> findCategories(){
+        return CustomResponseEntity.success(categoryService.findCategories());
     }
 }

@@ -20,14 +20,14 @@ public class UserController {
 
     //회원가입
     @PostMapping("/auth/signup")
-    public CustomResponseEntity<UserResponse.signup> signup(
+    public CustomResponseEntity<UserResponse.signup> signUp(
             @RequestBody @Valid final UserRequest.signup request){
         return CustomResponseEntity.success(userService.signup(request));
     }
 
     //로그인
     @PostMapping("/auth/signin")
-    public CustomResponseEntity<UserResponse.signin> signin(
+    public CustomResponseEntity<UserResponse.signin> signIn(
             @RequestBody @Valid final UserRequest.signin request){
         return CustomResponseEntity.success(userService.signin(request));
     }

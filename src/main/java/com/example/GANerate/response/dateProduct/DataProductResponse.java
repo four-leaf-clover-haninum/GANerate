@@ -1,6 +1,5 @@
 package com.example.GANerate.response.dateProduct;
 
-import com.example.GANerate.domain.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +14,7 @@ public class DataProductResponse {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class findAllCreateAt{
+    public static class findDataProducts {
         private Long id;
         private Long downloadCnt;
         private String title;
@@ -30,10 +29,29 @@ public class DataProductResponse {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class createProduct {
+    public static class createDataProduct {
         private String title;
         private Long price;
         private String description;
         private String imageUrl;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class findDataProduct {
+        private Long id;
+        private Long buyCnt;
+        //원하는 데이터 수량(이미지가 몇개들어있는지)
+        private Long dataSize;
+        private String title;
+        private Long price;
+        private String description;
+        private String imageUrl; // 이거 이미지 예시 여러개 띄울려면 list로 받아야됨.
+        private List<String> categoriseName;
+        private String zipfileName;
+        private int zipfileSize;
+        private LocalDateTime createdAt;
     }
 }

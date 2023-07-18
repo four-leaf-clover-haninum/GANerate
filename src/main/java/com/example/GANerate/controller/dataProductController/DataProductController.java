@@ -17,23 +17,28 @@ public class DataProductController {
     private final DataProductService dataProductService;
     //페이징 처리해서 데이터 상품 목록가져오기 (최신순으로)
     @GetMapping("/dataProducts")
-    public CustomResponseEntity<Page<DataProductResponse.findAllCreateAt>> findAll(
+    public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProducts(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
     Pageable pageable)
     {
-        return CustomResponseEntity.success(dataProductService.findAllDataProduct(pageable));
+        return CustomResponseEntity.success(dataProductService.findDataProducts(pageable));
     }
 
-    // 데이터 상품 생성
+    // 데이터 상품 생성(GANERTE 이용)
 //    @PostMapping("/dataProduct")
-//    public CustomResponseEntity<DataProductResponse.createProduct> createProduct(
-//            @AuthenticationPrincipal final Long userId, @RequestPart final DataProductRequest.createProduct request, @RequestPart MultipartFile zipfile){
-//        return CustomResponseEntity.success(dataProductService.createProduct(userId, request, zipfile));
-//    }
+//    public CustomResponseEntity<DataProductResponse.createDataProduct> createDataProduct(
+//            @AuthenticationPrincipal final Long userId, @RequestPart final DataProductRequest.createDataProduct request, @RequestPart MultipartFile zipfile){
+//        return CustomResponseEntity.success(dataProductService.createDataProduct(userId, request, zipfile));
+//    }폼
+
+    //데이터 상품 판매(그냥 폼을 이용해 올리기)
 
 
-//    // 단일 데이터 상품 조회
-//    @GetMapping("/dataProduct/{dataProductId}")
+    // 단일 데이터 상품 조회
+    @GetMapping("/dataProduct/{dataProductId}")
+    public CustomResponseEntity<DataProductResponse.findDataProduct> findDataProduct(@PathVariable Long dataProductId){
+        return CustomResponseEntity.success(dataProductService.findDataProduct(dataProductId));
+    }
 //
 //    // 데이터 상품 구매(아님 Order에서 주문 주문내역 조회, 주문 취소 등을 개발?
 
