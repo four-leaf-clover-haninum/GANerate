@@ -181,8 +181,11 @@ public class TokenProvider {
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        Long userId = Long.valueOf(claims.getSubject());
+
+        return new UsernamePasswordAuthenticationToken(userId, token, authorities);
+//        UserDetails principal = new User(claims.getSubject(), "", authorities);
+//        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
     public void setHeaderAccessToken(HttpServletResponse response, String accessToken) {
