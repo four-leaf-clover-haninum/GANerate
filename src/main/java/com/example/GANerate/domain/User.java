@@ -57,6 +57,10 @@ public class User extends BaseEntity{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Heart> hearts = new ArrayList<>();
 
+    //유저가 판매하는 데이터
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<DataProduct> dataProducts = new ArrayList<>();
+
 
     @Builder
     public User(String userPw, String name, String email, String phoneNum, Set<Authority> authorities){
