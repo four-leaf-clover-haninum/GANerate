@@ -3,7 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '2.7.13'
 	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 	id 'org.asciidoctor.jvm.convert' version '3.3.2'
-
+	id "com.ewerk.gradle.plugins.querydsl" version "1.0.10" //querydsl
 }
 
 group = 'com.example'
@@ -29,9 +29,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
+
 	//redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	// querydsl
+	implementation "com.querydsl:querydsl-jpa:5.0.0"
+	implementation "com.querydsl:querydsl-apt:5.0.0"
 
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	compileOnly 'org.projectlombok:lombok'
@@ -52,6 +56,8 @@ dependencies {
 	//spring email
 	implementation 'org.springframework.boot:spring-boot-starter-mail:2.7.1'
 
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.8'
+
 	testImplementation 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api'
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine'
@@ -63,9 +69,6 @@ dependencies {
 	//AWS S3
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
-	//swagger
-	implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
-
 	// build/generated-snippets 에 생긴 .adoc 조각들을 프로젝트 내의 .adoc 파일에서 읽어들일 수 있도록 연동해줍니다.
 	// 이 덕분에 .adoc 파일에서 operation 같은 매크로를 사용하여 스니펫 조각들을 연동할 수 있는 것입니다.
 	// 그리고 최종적으로 .adoc 파일을 HTML로 만들어 export 해줍니다.
@@ -74,6 +77,33 @@ dependencies {
 	// restdocs-mockmvc의 testCompile 구성 -> mockMvc를 사용해서 snippets 조각들을 뽑아낼 수 있게 된다.
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 }
+
+
+//========querydsl============
+//이놈
+def querydslDir = "$buildDir/generated/querydsl"
+
+querydsl { //이놈
+	jpa = true
+	querydslSourcesDir = querydslDir
+}
+
+sourceSets { //이놈
+	main.java.srcDir querydslDir
+}
+
+configurations { // 이놈
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	querydsl.extendsFrom compileClasspath
+}
+
+compileQuerydsl { // 이놈
+	options.annotationProcessorPath = configurations.querydsl
+}
+//===========
+
 
 ext {
 	snippetsDir = file('build/generated-snippets')
@@ -106,14 +136,18 @@ bootJar {
 //asciidoctor.doFirst {
 //	delete file('src/main/resources/static/docs')
 //}
-//
-//// asccidoctor 작업 이후 생성된 HTML 파일을 static/docs 로 copy
-//task copyDocument(type: Copy) {
-//	dependsOn asciidoctor
-//	from file("build/docs/asciidoc")
-//	into file("src/main/resources/static/docs")
-//}
 
+
+// asccidoctor 작업 이후 생성된 HTML 파일을 static/docs 로 copy
+task copyDocument(type: Copy) {
+	dependsOn bootJar
+	from file("build/docs/asciidoc")
+	into file("src/main/resources/static/docs")
+}
+
+build {
+	dependsOn copyDocument
+}
 
 // 참고사항 //
 // 공식 문서에서는 위의 ascidoctor.doFirst부터 아래 내용은 없고 이와 같은 내용만 있습니다.
