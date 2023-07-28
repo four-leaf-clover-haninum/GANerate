@@ -37,24 +37,30 @@ public class DataProduct extends BaseEntity{
     @NotNull
     private String description;
 
-    private String imageUrl;
+    @OneToMany(mappedBy = "dataProduct", cascade = CascadeType.ALL)
+    private List<ProductCategory> productCategories = new ArrayList<>();
 
     @OneToMany(mappedBy = "dataProduct", cascade = CascadeType.ALL)
-    private List<Product_Category> product_categories = new ArrayList<>();
+    private List<ExampleImage> exampleImages = new ArrayList<>();
+
+
 
     @OneToOne
     @JoinColumn(name = "zipfile_id")
     private ZipFile zipFile;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Builder
-    public DataProduct(Long buyCnt, String title, Long price, String description, Long dataSize, String imageUrl, List<Product_Category> product_categories){
+    public DataProduct(Long buyCnt, String title, Long price, String description, Long dataSize){
         this.buyCnt = buyCnt;
         this.title=title;
         this.price=price;
         this.description=description;
         this.dataSize=dataSize;
-        this.imageUrl=imageUrl;
-        this.product_categories=product_categories;
+
     }
 
     /**
@@ -62,5 +68,18 @@ public class DataProduct extends BaseEntity{
      */
     public void addDownloadCnt(){
         this.buyCnt +=1;
+    }
+
+    public void setZipFile(ZipFile zipFile){
+        this.zipFile=zipFile;
+    }
+    public void setUser(User user){
+        this.user = user;
+        user.getDataProducts().add(this);
+    }
+
+    public void addProductCategory(ProductCategory productCategory){
+        productCategories.add(productCategory);
+        productCategory.setDataProduct(this);
     }
 }
