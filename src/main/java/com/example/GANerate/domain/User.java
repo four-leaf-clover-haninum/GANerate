@@ -70,4 +70,5 @@ public class User extends BaseEntity{
         this.phoneNum=phoneNum;
         this.authorities = authorities;
     }
+
 }
