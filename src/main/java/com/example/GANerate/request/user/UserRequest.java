@@ -48,6 +48,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @Builder
+    @AllArgsConstructor
     public static class signin {
         @NotBlank(message = "아이디는 필수입니다.")
         private String email;
@@ -64,6 +66,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @Builder
+    @AllArgsConstructor
     public static class emailAuth{
         @Email
         @NotBlank(message = "이메일을 입력하시오.")
@@ -78,6 +82,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @AllArgsConstructor
+    @Builder
     public static class emailNum{
 
         @Email
@@ -97,6 +103,8 @@ public class UserRequest {
 
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class reissue {
         @NotBlank(message = "accessToken 을 입력해주세요.")
         private String accessToken;
@@ -107,6 +115,8 @@ public class UserRequest {
 
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class logout {
         @NotBlank(message = "잘못된 요청입니다.")
         private String accessToken;

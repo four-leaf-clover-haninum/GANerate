@@ -179,4 +179,10 @@ public class UserService {
                 .authorityName("ROLE_USER")
                 .build());
     }
+
+    public UserResponse.user findOne(Long id) {
+
+        User user = userRepository.findById(id).get();
+        return UserResponse.user.builder().id(user.getId()).build();
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.GANerate.response.user;
 
 import com.example.GANerate.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -115,5 +116,13 @@ public class UserResponse {
         private email(boolean emailAuth) {
             this.emailAuth = emailAuth;
         }
+    }
+
+    @NoArgsConstructor
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class user {
+        private Long id;
     }
 }
