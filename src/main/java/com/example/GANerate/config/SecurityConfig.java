@@ -26,7 +26,6 @@ import org.springframework.web.filter.CorsFilter;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private TokenProvider tokenProvider;
-//    private CorsFilter corsFilter;
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private RedisUtil redisUtil;
@@ -34,12 +33,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     public SecurityConfig(
             TokenProvider tokenProvider,
-//            CorsFilter corsFilter,
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler,
             RedisUtil redisUtil) {
         this.tokenProvider = tokenProvider;
-//        this.corsFilter = corsFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
         this.redisUtil = redisUtil;
@@ -71,7 +68,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
                 .authorizeRequests()//HttpServletRequest를 사용하는 요청들에 대한 접근 제한 설정
-                .antMatchers("/auth/signup", "/auth/signin", "/auth/email", "/auth/reissue", "/auth/logout" ,"/main/**").permitAll()
+                .antMatchers("/v1/users/sign-up", "/v1/users/sign-in", "/v1/users/email", "/v1/users/reissue", "/v1/users/logout", "/v1/main/**", "/docs/**" ).permitAll()
                 .anyRequest().authenticated()//위에서 지정한 요청 외는 모두 인증 필요
 
                 .and()
