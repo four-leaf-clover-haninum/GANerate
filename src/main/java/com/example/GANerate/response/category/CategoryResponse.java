@@ -13,6 +13,7 @@ public class CategoryResponse {
     @Builder
     public static class findCategories {
 
+        private Long categoryId;
         private int categoryCode;
         private String title;
 

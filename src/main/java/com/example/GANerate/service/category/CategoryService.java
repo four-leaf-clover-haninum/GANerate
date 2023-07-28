@@ -4,6 +4,7 @@ import com.example.GANerate.domain.Category;
 import com.example.GANerate.repository.CategoryRepository;
 import com.example.GANerate.response.category.CategoryResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
@@ -23,6 +25,7 @@ public class CategoryService {
 
         for (Category category : categories) {
             CategoryResponse.findCategories dto = CategoryResponse.findCategories.builder()
+                    .categoryId(category.getId())
                     .categoryCode(category.getCategoryCode())
                     .title(category.getTitle())
                     .build();
