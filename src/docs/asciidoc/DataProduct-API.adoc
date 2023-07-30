@@ -5,3 +5,6 @@
 === DataProduct 전체 페이징 조회
 operation::data-product-controller-test/find-data-products[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
 
+[[유저가-보유한-데이터-판매]]
+=== DataProduct 판매
+operation::data-product-controller-test/sale-data-products[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

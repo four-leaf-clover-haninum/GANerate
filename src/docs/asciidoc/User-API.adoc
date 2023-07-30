@@ -24,3 +24,7 @@ operation::user-controller-test/reissue[snippets='http-request,request-fields,pa
 [[User-로그아웃]]
 === User 로그아웃
 operation::user-controller-test/logout[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-좋아요한-데이터-상품-조회]]
+=== User 좋아요 상품 조회
+operation::user-controller-test/find-heart-data-products[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

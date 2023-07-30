@@ -1,0 +1,6 @@
+[[Heart-API]]
+== Heart API
+
+[[좋아요]]
+=== 좋아요 누르기
+operation::heart-controller-test/like[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
