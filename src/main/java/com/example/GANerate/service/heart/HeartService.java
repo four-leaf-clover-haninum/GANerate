@@ -12,6 +12,7 @@ import com.example.GANerate.response.CustomResponseEntity;
 import com.example.GANerate.response.heart.HeartResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +22,10 @@ public class HeartService {
     private final DataProductRepository dataProductRepository;
     private final HeartRepository heartRepository;
 
+    @Transactional
     public HeartResponse.likeResponse like(Long userId, Long dataProductId) {
-        User user = userRepository.findById(userId).get();
-        DataProduct dataProduct = dataProductRepository.findById(dataProductId).get();
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_USER));
+        DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
         //이미 좋아요 했으면
         Heart findHeart = heartRepository.findByUserAndDataProduct(user, dataProduct);
@@ -42,9 +44,10 @@ public class HeartService {
         return HeartResponse.likeResponse.builder().heartId(heart.getId()).build();
     }
 
+    @Transactional
     public void unlike(Long userId, Long dataProductId) {
-        User user = userRepository.findById(userId).get();
-        DataProduct dataProduct = dataProductRepository.findById(dataProductId).get();
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_USER));
+        DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
         // 삭제시 좋아요가 안되어 있으면 에러
         Heart heart = heartRepository.findByUserAndDataProduct(user, dataProduct);
