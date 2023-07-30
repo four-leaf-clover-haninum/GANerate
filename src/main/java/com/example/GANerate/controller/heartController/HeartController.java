@@ -16,7 +16,7 @@ public class HeartController {
 
     private final HeartService heartService;
 
-    // 좋아요 누르기 혹은 취소
+    // 좋아요 누르기
     @PostMapping("/v1/hearts/{data-product-id}")
     public CustomResponseEntity<HeartResponse.likeResponse> like(@AuthenticationPrincipal Long userId, @PathVariable("data-product-id") Long dataProductId){
         return CustomResponseEntity.success(heartService.like(userId, dataProductId));
