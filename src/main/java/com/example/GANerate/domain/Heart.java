@@ -26,7 +26,8 @@ public class Heart extends BaseEntity{
     private DataProduct dataProduct;
 
     @Builder
-    public Heart(User user, DataProduct dataProduct){
+    public Heart(Long id, User user, DataProduct dataProduct){
+        this.id = id;
         this.user = user;
         this.dataProduct = dataProduct;
     }

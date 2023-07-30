@@ -40,7 +40,8 @@ public class Order extends BaseEntity{
     }
 
     @Builder
-    public Order(OrderStatus orderStatus){
+    public Order(Long id, OrderStatus orderStatus){
+        this.id = id;
         this.status = orderStatus;
     }
 }

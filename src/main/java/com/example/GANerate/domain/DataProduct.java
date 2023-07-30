@@ -28,6 +28,9 @@ public class DataProduct extends BaseEntity{
     @NotNull
     private Long dataSize;
 
+//    @NotNull
+//    private String ThumbnailImage;
+
     @NotNull
     private String title;
 
@@ -54,7 +57,8 @@ public class DataProduct extends BaseEntity{
     private User user;
 
     @Builder
-    public DataProduct(Long buyCnt, String title, Long price, String description, Long dataSize){
+    public DataProduct(Long id, Long buyCnt, String title, Long price, String description, Long dataSize){
+        this.id = id;
         this.buyCnt = buyCnt;
         this.title=title;
         this.price=price;

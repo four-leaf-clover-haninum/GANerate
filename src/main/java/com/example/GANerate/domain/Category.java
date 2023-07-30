@@ -29,7 +29,8 @@ public class  Category {
     private List<ProductCategory> product_categories = new ArrayList<>();
 
     @Builder
-    public Category(int categoryCode, String title){
+    public Category(Long id, int categoryCode, String title){
+        this.id=id;
         this.categoryCode = categoryCode;
         this.title=title;
     }

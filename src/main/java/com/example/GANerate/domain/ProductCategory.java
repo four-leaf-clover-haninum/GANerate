@@ -23,7 +23,8 @@ public class ProductCategory {
     private DataProduct dataProduct;
 
     @Builder
-    public ProductCategory(Category category, DataProduct dataProduct){
+    public ProductCategory(Long id, Category category, DataProduct dataProduct){
+        this.id = id;
         this.category=category;
         this.dataProduct=dataProduct;
     }

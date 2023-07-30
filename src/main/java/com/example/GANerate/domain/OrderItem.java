@@ -1,5 +1,6 @@
 package com.example.GANerate.domain;
 
+import lombok.Builder;
 import lombok.Getter;
 
 import javax.persistence.*;
@@ -20,6 +21,11 @@ public class OrderItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "data_product_id")
     private DataProduct dataProduct;
+
+    @Builder
+    public OrderItem(Long id){
+        this.id=id;
+    }
 
     // Order 연관관계 편의 메서드
     public void setOrder(Order order){

@@ -32,7 +32,8 @@ public class ZipFile {
     private String uploadUrl;
 
     @Builder
-    public ZipFile(String originalFileName, String uploadFileName, int size, String uploadUrl) {
+    public ZipFile(Long id, String originalFileName, String uploadFileName, int size, String uploadUrl) {
+        this.id = id;
         this.originalFileName = originalFileName;
         this.uploadFileName = uploadFileName;
         this.size = size;

@@ -31,7 +31,8 @@ public class ExampleImage {
     private DataProduct dataProduct;
 
     @Builder
-    public ExampleImage(String originalFileName, String uploadFileName, String imageUrl){
+    public ExampleImage(Long id, String originalFileName, String uploadFileName, String imageUrl){
+        this.id = id;
         this.originalFileName = originalFileName;
         this.uploadFileName = uploadFileName;
         this.imageUrl = imageUrl;
