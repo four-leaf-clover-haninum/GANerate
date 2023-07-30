@@ -2,12 +2,13 @@ package com.example.GANerate.service.user;
 
 import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.config.redis.RedisUtil;
-import com.example.GANerate.domain.Authority;
-import com.example.GANerate.domain.User;
+import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
+import com.example.GANerate.repository.HeartRepository;
 import com.example.GANerate.repository.UserRepository;
 import com.example.GANerate.request.user.UserRequest;
+import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.response.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,6 @@ public class UserService {
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisUtil redisUtil;
-
 
     //회원가입
     @Transactional
@@ -144,6 +144,45 @@ public class UserService {
                     .build())
             .collect(Collectors.toList());
          */
+    }
+
+    // 좋아요 한 데이터 조회
+    @Transactional
+    public List<DataProductResponse.findHeartDataProducts> findHeartDataProducts(Long userId){
+        User user = userRepository.findById(userId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_USER));
+        List<Heart> hearts = user.getHearts();
+
+        List<DataProduct> dataProducts = new ArrayList<>();
+        for(Heart heart: hearts){
+            dataProducts.add(heart.getDataProduct());
+        }
+
+        List<DataProductResponse.findHeartDataProducts> response = new ArrayList<>();
+
+        for(DataProduct dataProduct:dataProducts){
+            ExampleImage exampleImage = dataProduct.getExampleImages().get(0);
+            String imageUrl = exampleImage.getImageUrl();
+
+            List<ProductCategory> productCategories = dataProduct.getProductCategories();
+            List<String> categoryTitles = new ArrayList<>();
+            for(ProductCategory productCategory : productCategories){
+                String categoryTitle = productCategory.getCategory().getTitle();
+                categoryTitles.add(categoryTitle);
+            }
+
+            DataProductResponse.findHeartDataProducts findHeartDataProducts = DataProductResponse.findHeartDataProducts
+                    .builder()
+                    .productId(dataProduct.getId())
+                    .title(dataProduct.getTitle())
+                    .price(dataProduct.getPrice())
+                    .description(dataProduct.getDescription())
+                    .createdAt(dataProduct.getCreatedAt())
+                    .imageUrl(imageUrl)
+                    .categoriesName(categoryTitles)
+                    .build();
+            response.add(findHeartDataProducts);
+        }
+        return response;
     }
 
     private void validateDuplicatedUserEmail(String userEmail) {

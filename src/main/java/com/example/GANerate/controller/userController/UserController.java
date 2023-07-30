@@ -3,6 +3,7 @@ package com.example.GANerate.controller.userController;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.CustomResponseEntity;
+import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.response.user.UserResponse;
 import com.example.GANerate.service.user.EmailService;
 import com.example.GANerate.service.user.UserService;
@@ -56,6 +57,12 @@ public class UserController {
     @PostMapping("/v1/users/logout")
     public CustomResponseEntity<UserResponse.logout> logout(@RequestBody @Valid final UserRequest.logout request){
         return CustomResponseEntity.success(userService.logout(request));
+    }
+
+    //좋아요한 데이터 상품 목록
+    @GetMapping("/v1/users/hearts")
+    public CustomResponseEntity<List<DataProductResponse.findHeartDataProducts>> findHeartDataProducts(@AuthenticationPrincipal Long userId){
+        return CustomResponseEntity.success(userService.findHeartDataProducts(userId));
     }
 
 
