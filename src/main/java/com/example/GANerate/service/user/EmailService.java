@@ -49,7 +49,7 @@ public class EmailService {
             helper.setText(text, true);//포함된 텍스트가 HTML이라는 의미로 true.
             javaMailSender.send(mimeMessage);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            throw new CustomException(Result.FAIL_SEND_EMAIL);
         }
 
         // 유효 시간(5분)동안 {email, authKey} 저장
