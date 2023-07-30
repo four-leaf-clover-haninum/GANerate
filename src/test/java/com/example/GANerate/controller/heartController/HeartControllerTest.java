@@ -10,16 +10,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,16 +38,16 @@ class HeartControllerTest extends RestDocsTestSupport {
 
         User user = new User(userId, "test", "test", "test", "test", null);
         DataProduct dataProduct = new DataProduct(dataProductId, 1L, "test", 1000L, "testing", 12L);
-        Heart heart = new Heart(1l,user,dataProduct);
+        Heart heart = new Heart(1L, user, dataProduct);
 
-        HeartResponse.likeResponse response = HeartResponse.likeResponse.builder()
-                .heartId(heart.getId())
+        HeartResponse response = HeartResponse.builder()
+                .heartId(1L)
                 .build();
 
-        given(heartService.like(any(Long.class), any(Long.class))).willReturn(response);
+        given(heartService.like(eq(1L))).willReturn(response);
 
         ResultActions result = this.mockMvc.perform(
-                post("/v1/hearts/{data-product-id}",dataProductId)
+                post("/v1/hearts/{data-product-id}", dataProductId)
                         .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
@@ -64,7 +67,8 @@ class HeartControllerTest extends RestDocsTestSupport {
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
                                         fieldWithPath("data.heartId").type(JsonFieldType.NUMBER).description("좋아요 키값")
                                 )
-                ));
+                        )
+                );
     }
 
     @Test
