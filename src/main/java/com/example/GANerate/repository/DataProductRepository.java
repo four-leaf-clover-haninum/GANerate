@@ -16,6 +16,8 @@ public interface DataProductRepository extends JpaRepository<DataProduct, Long>{
 
     Page<DataProduct> findAllByProductCategoriesIn(List<ProductCategory> productCategories, Pageable pageable);
 
+    List<DataProduct> findTop3ByOrderByBuyCntDesc();
+
 //    @Query("SELECT dp.id AS dataProductId, dp.buyCnt, dp.price, dp.title, dp.description, dp.imageUrl, dp.createdAt, c.id AS categoryId, c.title AS categoryName "
 //            + "FROM DataProduct dp "
 //            + "LEFT JOIN dp.product_categories pc "
