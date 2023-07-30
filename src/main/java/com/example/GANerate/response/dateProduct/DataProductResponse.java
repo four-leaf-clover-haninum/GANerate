@@ -60,4 +60,19 @@ public class DataProductResponse {
     public static class saleDataProduct {
         private Long id;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class findHeartDataProducts {
+        private Long productId;
+//        private Long buyCnt;
+        private String title;
+        private Long price;
+        private String description;
+        private String imageUrl;
+        private LocalDateTime createdAt;
+        private List<String> categoriesName;
+    }
 }
