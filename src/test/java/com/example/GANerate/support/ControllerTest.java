@@ -1,5 +1,6 @@
 package com.example.GANerate.support;
 
+import com.example.GANerate.config.SecurityConfig;
 import com.example.GANerate.config.jwt.JwtAccessDeniedHandler;
 import com.example.GANerate.config.jwt.JwtAuthenticationEntryPoint;
 import com.example.GANerate.config.jwt.TokenProvider;
@@ -26,12 +27,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @Disabled
-@WebMvcTest({
+@WebMvcTest(controllers = {
         UserController.class,
         DataProductController.class,
         CategoryController.class,
         HeartController.class,
-})
+}, excludeAutoConfiguration = SecurityConfig.class)
 public abstract class ControllerTest {
 
     @Autowired
