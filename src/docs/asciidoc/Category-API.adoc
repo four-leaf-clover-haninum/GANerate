@@ -1,0 +1,6 @@
+[[Category-API]]
+== Category API
+
+[[카테고리-전체-조회]]
+=== Category 전체 조회
+operation::category-controller-test/find-categories[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

@@ -1,12 +1,13 @@
 package com.example.GANerate.domain;
 
-import lombok.Getter;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
-public class Product_Category {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ProductCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,20 +22,19 @@ public class Product_Category {
     @JoinColumn(name = "data_product_id")
     private DataProduct dataProduct;
 
+    @Builder
+    public ProductCategory(Long id, Category category, DataProduct dataProduct){
+        this.id = id;
+        this.category=category;
+        this.dataProduct=dataProduct;
+    }
+
 
     public void setDataProduct(DataProduct dataProduct){
-        if(this.dataProduct != null){
-            this.dataProduct.getProduct_categories().remove(this);
-        }
         this.dataProduct=dataProduct;
-        dataProduct.getProduct_categories().add(this);
     }
 
     public void setCategory(Category category){
-        if(this.category != null){
-            this.category.getProduct_categories().remove(this);
-        }
         this.category=category;
-        category.getProduct_categories().add(this);
     }
 }

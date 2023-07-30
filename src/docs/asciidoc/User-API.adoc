@@ -1,0 +1,30 @@
+[[User-API]]
+== User API
+
+[[User-회원가입]]
+=== User 회원가입
+operation::user-controller-test/sign-up[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-로그인]]
+=== User 로그인
+operation::user-controller-test/sign-in[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-이메일-인증번호-전송]]
+=== User 이메일 인증 번호 전송
+operation::user-controller-test/email-send[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-이메일-인증번호-인증]]
+=== User 이메일 인증 번호 인증
+operation::user-controller-test/check-email-auth[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-토큰-재발급]]
+=== User 토큰 재발급
+operation::user-controller-test/reissue[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-로그아웃]]
+=== User 로그아웃
+operation::user-controller-test/logout[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-좋아요한-데이터-상품-조회]]
+=== User 좋아요 상품 조회
+operation::user-controller-test/find-heart-data-products[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

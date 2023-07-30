@@ -1,9 +1,11 @@
 package com.example.GANerate.config.jwt;
 
+import com.example.GANerate.config.redis.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -18,9 +20,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends GenericFilterBean {
 
     private final TokenProvider tokenProvider;
+    private final RedisUtil redisUtil;
 
-    public JwtAuthenticationFilter(TokenProvider tokenProvider){
+    public JwtAuthenticationFilter(TokenProvider tokenProvider, RedisUtil redisUtil){
         this.tokenProvider = tokenProvider;
+        this.redisUtil=redisUtil;
     }
 
     @Override // GenericFilterBean 오버라이드
@@ -36,10 +40,14 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         //토큰 유효성 검사
         if (token != null && tokenProvider.validateToken(token)) {
 
-            Authentication authentication = tokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication); // jwt 토큰 인증정보를 SecurityContext에 저장
-            log.info("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(), requestURI);
+            // (추가) Redis 에 해당 accessToken logout 여부 확인
+            String isLogout = (String)redisUtil.getData(token);
+            if (ObjectUtils.isEmpty(isLogout)){
+                Authentication authentication = tokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication); // jwt 토큰 인증정보를 SecurityContext에 저장
+                log.info("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(), requestURI);
             }
+        }
         else {
             log.info("유효한 JWT 토큰이 없습니다, uri {}", requestURI);
         }

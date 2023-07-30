@@ -1,7 +1,8 @@
-package com.example.GANerate.request;
+package com.example.GANerate.request.user;
 
 import com.example.GANerate.domain.User;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @AllArgsConstructor
+    @Builder
     public static class signup {
 
         @NotBlank(message = "이메일은 필수입니다.")
@@ -32,6 +35,8 @@ public class UserRequest {
         @NotBlank(message = "휴대폰 번호는 필수입니다.")
         private String phoneNum;
 
+        private boolean emailAuth;
+
         public User toEntity() {
             return User.builder()
                     .email(email)
@@ -43,6 +48,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @Builder
+    @AllArgsConstructor
     public static class signin {
         @NotBlank(message = "아이디는 필수입니다.")
         private String email;
@@ -59,6 +66,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @Builder
+    @AllArgsConstructor
     public static class emailAuth{
         @Email
         @NotBlank(message = "이메일을 입력하시오.")
@@ -73,6 +82,8 @@ public class UserRequest {
 
     @NoArgsConstructor
     @Getter
+    @AllArgsConstructor
+    @Builder
     public static class emailNum{
 
         @Email
@@ -88,6 +99,30 @@ public class UserRequest {
             lst.add(certificationNum);
             return lst;
         }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class reissue {
+        @NotBlank(message = "accessToken 을 입력해주세요.")
+        private String accessToken;
+
+        @NotBlank(message = "refreshToken 을 입력해주세요.")
+        private String refreshToken;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class logout {
+        @NotBlank(message = "잘못된 요청입니다.")
+        private String accessToken;
+
+        @NotBlank(message = "잘못된 요청입니다.")
+        private String refreshToken;
     }
 }
 

@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name="orders")
-public class Order {
+public class Order extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,15 +35,13 @@ public class Order {
 
     //연관관계 편의 메서드
     public void setUser(User user){
-        if (this.user != null){
-            this.user.getOrders().remove(this);
-        }
         this.user=user;
         user.getOrders().add(this);
     }
 
     @Builder
-    public Order(OrderStatus orderStatus){
+    public Order(Long id, OrderStatus orderStatus){
+        this.id = id;
         this.status = orderStatus;
     }
 }

@@ -1,13 +1,15 @@
-package com.example.GANerate.service;
+package com.example.GANerate.service.user;
 
 import com.example.GANerate.config.jwt.TokenProvider;
-import com.example.GANerate.domain.Authority;
-import com.example.GANerate.domain.User;
+import com.example.GANerate.config.redis.RedisUtil;
+import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
+import com.example.GANerate.repository.HeartRepository;
 import com.example.GANerate.repository.UserRepository;
-import com.example.GANerate.request.UserRequest;
-import com.example.GANerate.response.UserResponse;
+import com.example.GANerate.request.user.UserRequest;
+import com.example.GANerate.response.dateProduct.DataProductResponse;
+import com.example.GANerate.response.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.example.GANerate.enumuration.Result.USERID_NOT_FOUND;
 
@@ -35,13 +36,18 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-
+    private final RedisUtil redisUtil;
 
     //회원가입
     @Transactional
     public UserResponse.signup signup(UserRequest.signup request){
         //아이디 중복 검사
         validateDuplicatedUserEmail(request.getEmail());
+
+        // 이메일 인증 검사
+        if(request.isEmailAuth()!=true){
+            throw new CustomException(Result.UN_AUTHENTICATION_EMAIL);
+        }
 
         //저장
         User user = userRepository.save(createEntityUserFromDto(request));
@@ -64,8 +70,49 @@ public class UserService {
 
         //앞에서 exception 안나면 access token 발행
         String accessToken = tokenProvider.createToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
-        //String refreshToken = tokenProvider.createRefreshToken(user.getId());
-        return UserResponse.signin.response(user, accessToken);
+        String refreshToken = tokenProvider.createRefreshToken(user.getId(), getAuthentication(request.getEmail(), request.getUserPw()));
+        return UserResponse.signin.builder()
+                .email(request.getEmail())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    // access Token 재발급
+    @Transactional
+    public UserResponse.reissue reissue(UserRequest.reissue request){
+
+        String accessToken = tokenProvider.reissue(request);
+
+        return UserResponse.reissue.builder()
+                .accessToken(accessToken)
+                .build();
+    }
+
+    //logout
+    @Transactional
+    public UserResponse.logout logout(UserRequest.logout request){
+        // 1. Access Token 검증
+        if (!tokenProvider.validateToken(request.getAccessToken())) {
+            throw new CustomException(Result.BAD_REQUEST);
+        }
+
+        // 2. Access Token 에서 User email 을 가져옵니다.
+        Authentication authentication = tokenProvider.getAuthentication(request.getAccessToken());
+
+        // 3. Redis 에서 해당 User email 로 저장된 Refresh Token 이 있는지 여부를 확인 후 있을 경우 삭제합니다.
+        if (redisUtil.getData(authentication.getName()) != null) {
+            // Refresh Token 삭제
+            redisUtil.deleteData(authentication.getName());
+        }
+
+        // 4. 해당 Access Token 유효시간 가지고 와서 BlackList 로 저장하기
+        Long expiration = tokenProvider.getExpiration(request.getAccessToken());
+        redisUtil.setDataExpire(request.getAccessToken(), "logout", expiration);
+
+        return UserResponse.logout.builder()
+                .userId(Long.valueOf(authentication.getName()))
+                .build();
     }
 
     //전체 유저 조회
@@ -87,7 +134,7 @@ public class UserService {
 
         /*
         스트림으로
-        List<User> all = userRepository.findAll();
+        List<User> all = userRepository.findDataProducts();
 
         return all.stream()
             .map(user -> UserResponse.userAll.builder()
@@ -97,6 +144,45 @@ public class UserService {
                     .build())
             .collect(Collectors.toList());
          */
+    }
+
+    // 좋아요 한 데이터 조회
+    @Transactional
+    public List<DataProductResponse.findHeartDataProducts> findHeartDataProducts(Long userId){
+        User user = userRepository.findById(userId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_USER));
+        List<Heart> hearts = user.getHearts();
+
+        List<DataProduct> dataProducts = new ArrayList<>();
+        for(Heart heart: hearts){
+            dataProducts.add(heart.getDataProduct());
+        }
+
+        List<DataProductResponse.findHeartDataProducts> response = new ArrayList<>();
+
+        for(DataProduct dataProduct:dataProducts){
+            ExampleImage exampleImage = dataProduct.getExampleImages().get(0);
+            String imageUrl = exampleImage.getImageUrl();
+
+            List<ProductCategory> productCategories = dataProduct.getProductCategories();
+            List<String> categoryTitles = new ArrayList<>();
+            for(ProductCategory productCategory : productCategories){
+                String categoryTitle = productCategory.getCategory().getTitle();
+                categoryTitles.add(categoryTitle);
+            }
+
+            DataProductResponse.findHeartDataProducts findHeartDataProducts = DataProductResponse.findHeartDataProducts
+                    .builder()
+                    .productId(dataProduct.getId())
+                    .title(dataProduct.getTitle())
+                    .price(dataProduct.getPrice())
+                    .description(dataProduct.getDescription())
+                    .createdAt(dataProduct.getCreatedAt())
+                    .imageUrl(imageUrl)
+                    .categoriesName(categoryTitles)
+                    .build();
+            response.add(findHeartDataProducts);
+        }
+        return response;
     }
 
     private void validateDuplicatedUserEmail(String userEmail) {
@@ -131,5 +217,11 @@ public class UserService {
         return Collections.singleton(Authority.builder()
                 .authorityName("ROLE_USER")
                 .build());
+    }
+
+    public UserResponse.user findOne(Long id) {
+
+        User user = userRepository.findById(id).get();
+        return UserResponse.user.builder().id(user.getId()).build();
     }
 }

@@ -19,19 +19,24 @@ public class ZipFile {
     private Long id;
 
     @NotNull
-    private String title;
+    private String originalFileName;
+
+    @NotNull
+    private String uploadFileName;
 
     @NotNull
     private int size;
 
     @NotNull
-    private String zipFileUrl;
+    @Column(length = 15000)
+    private String uploadUrl;
 
     @Builder
-    public ZipFile(String title, int size, String zipFileUrl){
-        this.title=title;
-        this.size=size;
-        this.zipFileUrl=zipFileUrl;
+    public ZipFile(Long id, String originalFileName, String uploadFileName, int size, String uploadUrl) {
+        this.id = id;
+        this.originalFileName = originalFileName;
+        this.uploadFileName = uploadFileName;
+        this.size = size;
+        this.uploadUrl = uploadUrl;
     }
-
 }

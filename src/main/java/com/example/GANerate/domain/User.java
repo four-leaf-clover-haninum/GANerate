@@ -33,6 +33,9 @@ public class User extends BaseEntity{
     @NotNull
     private String phoneNum;
 
+    @Column(name = "email_auth", columnDefinition = "INT DEFAULT 0")
+    private boolean emailAuth;
+
     // Autority와 User는 Many To Many 관계이기 때문에, Join Table이 필수적이다.
     // user_id, authority_name을 필드로 갖는 join 테이블이 생성된다.
     @ManyToMany
@@ -54,13 +57,19 @@ public class User extends BaseEntity{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Heart> hearts = new ArrayList<>();
 
+    //유저가 판매하는 데이터
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<DataProduct> dataProducts = new ArrayList<>();
+
 
     @Builder
-    public User(String userPw, String name, String email, String phoneNum, Set<Authority> authorities){
+    public User(Long id, String userPw, String name, String email, String phoneNum, Set<Authority> authorities){
+        this.id=id;
         this.userPw=userPw;
         this.name=name;
         this.email=email;
         this.phoneNum=phoneNum;
         this.authorities = authorities;
     }
+
 }

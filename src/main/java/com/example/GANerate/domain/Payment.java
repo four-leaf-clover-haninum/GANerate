@@ -34,7 +34,7 @@ public class Payment {
     @NotNull
     private String merchantUid;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "data_product_id")
     private DataProduct dataProduct;
 
@@ -43,7 +43,8 @@ public class Payment {
     private User user;
 
     @Builder
-    public Payment(Long paymentsNo, String payMethod, String impUid, String merchantUid){
+    public Payment(Long id, Long paymentsNo, String payMethod, String impUid, String merchantUid){
+        this.id = id;
         this.paymentsNo=paymentsNo;
         this.payMethod=payMethod;
         this.impUid=impUid;

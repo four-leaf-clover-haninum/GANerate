@@ -1,5 +1,6 @@
 package com.example.GANerate.domain;
 
+import lombok.Builder;
 import lombok.Getter;
 
 import javax.persistence.*;
@@ -21,11 +22,13 @@ public class OrderItem {
     @JoinColumn(name = "data_product_id")
     private DataProduct dataProduct;
 
+    @Builder
+    public OrderItem(Long id){
+        this.id=id;
+    }
+
     // Order 연관관계 편의 메서드
     public void setOrder(Order order){
-        if (this.order!=null){
-            this.order.getOrderItems().remove(this);
-        }
         this.order=order;
         order.getOrderItems().add(this);
     }
