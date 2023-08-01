@@ -25,18 +25,18 @@ public class ZipFile {
     private String uploadFileName;
 
     @NotNull
-    private int size;
+    private double sizeGb;
 
     @NotNull
     @Column(length = 15000)
     private String uploadUrl;
 
     @Builder
-    public ZipFile(Long id, String originalFileName, String uploadFileName, int size, String uploadUrl) {
+    public ZipFile(Long id, String originalFileName, String uploadFileName, double sizeGb, String uploadUrl) {
         this.id = id;
         this.originalFileName = originalFileName;
         this.uploadFileName = uploadFileName;
-        this.size = size;
+        this.sizeGb = sizeGb;
         this.uploadUrl = uploadUrl;
     }
 }
