@@ -16,7 +16,9 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.restdocs.request.RequestPartsSnippet;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -24,13 +26,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
+import static com.example.GANerate.config.RestDocsConfig.field;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 
@@ -100,7 +107,7 @@ class DataProductControllerTest extends RestDocsTestSupport {
                                         fieldWithPath("data.content[].description").type(JsonFieldType.STRING).description("설명"),
                                         fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
                                         fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
-                                        fieldWithPath("data.content[].categoryId").type(JsonFieldType.NUMBER).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data.content[].categoryId").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
                                         fieldWithPath("data.content[].categoriesName").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
 
                                         fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
@@ -129,78 +136,412 @@ class DataProductControllerTest extends RestDocsTestSupport {
     }
 
     @Test
-    @DisplayName("유저가 보유한 데이터 판매")
-    //카테고리 이슈 해결하고 다시 수정
-    void saleDataProducts() throws Exception {
+    @DisplayName("유저가 보유한 데이터 zip 업로드")
+    void saleDataProductsZip() throws Exception {
         //given
-        Long userId =1l;
-        List<Long> categoryId = new ArrayList<>();
-        categoryId.add(1l);
-        categoryId.add(2l);
 
-        //요청 dto
-        DataProductRequest.saleProduct requestDto = DataProductRequest.saleProduct.builder()
-                .title("test 상품").price(10000l).description("test 상품 입니다.").categoryIds(List.of(1l,2l))
+        DataProductResponse.saleDataProductZip response = DataProductResponse.saleDataProductZip.builder()
+                .dataSize(100L)
+                .zipFileUrl("http://test.testing")
                 .build();
 
-        String request = objectMapper.writeValueAsString(requestDto);
-
-        String path="스크린샷 2023-07-14 오후 2.50.04.png";
-        InputStream inputStream = new ClassPathResource(path).getInputStream();
-        // 이미지 파일들 생성
-        MockMultipartFile imageFile1 = new MockMultipartFile(
-                "imageFiles", "스크린샷 2023-07-14 오후 2.50.04.png", "image/png", inputStream.readAllBytes());
-
-        byte[] dummyZipBytes = new byte[]{};
-        MockMultipartFile zipFile = new MockMultipartFile(
-                "zipFile",
-                "dummy.zip",
-                "application/zip",
-                dummyZipBytes
+        // MockMultipartFile 생성
+        MockMultipartFile mockMultipartFile = new MockMultipartFile(
+                "zipFile",                        // 파라미터 이름
+                "test.zip",                       // 파일 이름
+                "application/zip",                // 컨텐츠 타입
+                "test data".getBytes()            // 파일 데이터 (바이트 배열)
         );
 
-        // 응답
-        DataProductResponse.saleDataProduct response = DataProductResponse.saleDataProduct.builder()
-                .id(1l)
-                .build();
+        given(dataProductService.saleDataProductZip(eq(mockMultipartFile))).willReturn(response);
 
-        given(dataProductService.saleDataProduct(userId,zipFile,List.of(imageFile1), requestDto)).willReturn(response);
-
+        // when
         ResultActions result = this.mockMvc.perform(
-                multipart("/v1/data-products/sale")
-                        .file("zipFile", zipFile.getBytes())
-                        .file("exampleImages", imageFile1.getBytes())
-                        .content(request)
-                        .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .header("Authorization", "Bearer dXNldasdasdasdasdasdgfgegrtjyrutwcjpzZWNyZXQ=")
+                MockMvcRequestBuilders.multipart("/v1/data-products/sale/zip")
+                        .file(mockMultipartFile)
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
         );
 
+        // then
         result.andExpect(status().isOk())
                 .andDo(
                         restDocs.document(
-                                requestParts(
-                                        partWithName("zipFile").description("이미지 데이터 상품 zip"),
-                                        partWithName("exampleImages").description("예시 이미지(썸네일)")
-                                ),
-                                requestFields(
-                                        fieldWithPath("title").type(JsonFieldType.STRING).description("상품 명"),
-                                        fieldWithPath("price").type(JsonFieldType.NUMBER).description("상품 가격"),
-                                        fieldWithPath("description").type(JsonFieldType.STRING).description("상품 설먕"),
-                                        fieldWithPath("categoryIds[]").type(JsonFieldType.ARRAY).description("속한 카테고리").optional()
-                                        ),
+                                relaxedRequestParts( // (2)
+                                        partWithName("zipFile").description("판매시 업로드할 zipFile")), // (3)
                                 responseFields(
                                         fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
-                                        fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("생성된 상품 id")
+                                        fieldWithPath("data.dataSize").type(JsonFieldType.NUMBER).description("zip 내부의 파일 수"),
+                                        fieldWithPath("data.zipFileUrl").type(JsonFieldType.STRING).description("zip 다운로드 url")
                                 )
-
                         )
                 )
         ;
     }
 
     @Test
-    void findDataProduct() {
+    @DisplayName("유저가 보유한 예시 이미지 업로드")
+    void saleDataProductsImages() throws Exception {
+        //given
+        DataProductResponse.saleDataProductImages dto1 = DataProductResponse.saleDataProductImages.builder()
+                .imageUrl("http://test1.testing").build();
+
+        DataProductResponse.saleDataProductImages dto2 = DataProductResponse.saleDataProductImages.builder()
+                .imageUrl("http://test2.testing").build();
+
+        List<DataProductResponse.saleDataProductImages> response = List.of(dto1,dto2);
+
+        Path path = Paths.get("src/test/resources/스크린샷 2023-07-14 오후 2.50.04.png");
+
+        MockMultipartFile mockMultipartFile1 = new MockMultipartFile(
+                "exampleImages",                        // 파라미터 이름
+                "exampleImages.png",                       // 파일 이름
+                "image/png",                // 컨텐츠 타입
+                Files.readAllBytes(path)            // 파일 데이터 (바이트 배열)
+        );
+
+        MockMultipartFile mockMultipartFile2 = new MockMultipartFile(
+                "exampleImages",                // 파라미터 이름
+                "example.png",                  // 파일 이름
+                "image/png",                    // 컨텐츠 타입
+                Files.readAllBytes(path)        // 파일 데이터 (바이트 배열)
+        );
+        List<MultipartFile> exampleImages = List.of(mockMultipartFile1, mockMultipartFile2);
+
+
+        given(dataProductService.saleDataProductImages(eq(exampleImages))).willReturn(response);
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+                MockMvcRequestBuilders.multipart("/v1/data-products/sale/image")
+                        .file(mockMultipartFile1)
+                        .file(mockMultipartFile2)
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                relaxedRequestParts( // (2)
+                                        partWithName("exampleImages").description("판매시 업로드 할 imageFile 리스트")), // (3)
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data[].imageUrl").type(JsonFieldType.STRING).description("image 다운로드 url")
+                                )
+                        )
+                )
+        ;
+
+    }
+
+    @Test
+    @DisplayName("유저가 보유한 데이터 판매 폼 업로드")
+    void saleDataProductsForm() throws Exception {
+        // given
+        DataProductResponse.saleDataProduct response = DataProductResponse.saleDataProduct.builder()
+                .id(1L).build();
+
+        List<Long> categoryIds = List.of(1L,2L);
+        List<String> imageUrls = List.of("http://test1.com","http://test2.com");
+
+        DataProductRequest.saleProduct request = DataProductRequest.saleProduct.builder()
+                .title("test 상품").dataSize(10L).description("test 상품입니다").categoryIds(categoryIds).zipFileUrl("http://ziptest").imageUrls(imageUrls).price(1000L).build();
+
+        given(dataProductService.saleDataProductForm(any(DataProductRequest.saleProduct.class))).willReturn(response);
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+                post("/v1/data-products/sale")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+        // then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                requestFields(
+                                        fieldWithPath("title").description("상품명"),
+                                        fieldWithPath("dataSize").description("zip 내부 파일 개수"),
+                                        fieldWithPath("description").description("상품 설명"),
+                                        fieldWithPath("categoryIds").description("상품이 속하는 카테고리"),
+                                        fieldWithPath("price").description("상품가격"),
+                                        fieldWithPath("zipFileUrl").description("zip 파일 url"),
+                                        fieldWithPath("imageUrls").description("예시 사진 url")
+                                )
+                                ,responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("생선된 상품의 키값")
+                                )
+                        )
+                )
+        ;
+    }
+
+    @Test
+    @DisplayName("선택한 카테고리 상품 페이징")
+    void findCategoryDataProducts() throws Exception {
+
+        List<Long> categoryId = new ArrayList<>();
+        categoryId.add(1l);
+        categoryId.add(2l);
+
+        List<String> categoriesName = new ArrayList<>();
+        categoriesName.add("패션");
+        categoriesName.add("의료");
+
+        DataProductResponse.findDataProducts dto1 = DataProductResponse.findDataProducts.builder()
+                .id(1L)
+                .title("test1")
+                .price(1000L)
+                .createdAt(LocalDateTime.now())
+                .categoryId(List.of(1L))
+                .categoriesName(List.of("패션"))
+                .buyCnt(2L)
+                .description("testing1")
+                .imageUrl("http://test1.com").build();
+
+        DataProductResponse.findDataProducts dto2 = DataProductResponse.findDataProducts.builder()
+                .id(2L)
+                .title("test2")
+                .price(1200L)
+                .createdAt(LocalDateTime.now())
+                .categoryId(List.of(2L))
+                .categoriesName(List.of("의료"))
+                .buyCnt(21L)
+                .description("testing2")
+                .imageUrl("http://test2.com").build();
+
+        DataProductResponse.findDataProducts dto3 = DataProductResponse.findDataProducts.builder()
+                .id(3L)
+                .title("test3")
+                .price(3200L)
+                .createdAt(LocalDateTime.now())
+                .categoryId(List.of(2L))
+                .categoriesName(List.of("의료"))
+                .buyCnt(211L)
+                .description("testing3")
+                .imageUrl("http://test3.com").build();
+
+        List<DataProductResponse.findDataProducts> content = List.of(dto2, dto3);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+
+        // Create Page object
+        Page<DataProductResponse.findDataProducts> pageResponse = new PageImpl<>(content, pageable, 2);
+
+        // Mocking 서비스 응답
+        given(dataProductService.findCategoryDataProducts(ArgumentMatchers.eq(pageable), any(Long.class))).willReturn(pageResponse);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/data-products/category/{categoryId}", 2L)
+                        .param("page", "0")
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                requestParameters(
+                                        parameterWithName("page").description("페이지 번호 (0-based index)")
+                                ),
+                                pathParameters(
+                                        parameterWithName("categoryId").description("조회할 카테고리 id")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+
+                                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data.content[].buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
+                                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING).description("상품명"),
+                                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER).description("가격"),
+                                        fieldWithPath("data.content[].description").type(JsonFieldType.STRING).description("설명"),
+                                        fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
+                                        fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
+                                        fieldWithPath("data.content[].categoryId").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data.content[].categoriesName").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
+
+                                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
+                                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN).description("정렬되지 않은 경우 여부"),
+                                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN).description("정렬 정보가 비어있는지 여부"),
+                                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
+                                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER).description("페이지 크기"),
+                                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER).description("현재 페이지의 시작 위치"),
+                                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN).description("페이징 여부"),
+                                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN).description("페이징되지 않은 경우 여부"),
+                                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER).description("전체 페이지 수"),
+                                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER).description("전체 요소 수"),
+                                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN).description("마지막 페이지 여부"),
+                                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER).description("현재 페이지의 요소 수"),
+                                        fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("현재 페이지 크기"),
+                                        fieldWithPath("data.number").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
+                                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
+                                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN).description("정렬되지 않은 경우 여부"),
+                                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN).description("정렬 정보가 비어있는지 여부"),
+                                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN).description("첫 번째 페이지 여부"),
+                                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN).description("데이터가 비어있는지 여부")
+                                )
+                        )
+                )
+        ;
+
+    }
+
+    @Test
+    @DisplayName("메인페이지 구매 top3")
+    void findCategoryDataProductsTop3() throws Exception{
+        List<Long> categoryId = new ArrayList<>();
+        categoryId.add(1l);
+        categoryId.add(2l);
+
+        List<String> categoriesName = new ArrayList<>();
+        categoriesName.add("패션");
+        categoriesName.add("의료");
+
+        DataProductResponse.findDataProducts dto1 = DataProductResponse.findDataProducts.builder()
+                .id(1L)
+                .title("test1")
+                .price(1000L)
+                .createdAt(LocalDateTime.now())
+                .categoryId(List.of(1L))
+                .categoriesName(List.of("패션"))
+                .buyCnt(2L)
+                .description("testing1")
+                .imageUrl("http://test1.com").build();
+
+        DataProductResponse.findDataProducts dto2 = DataProductResponse.findDataProducts.builder()
+                .id(2L)
+                .title("test2")
+                .price(1200L)
+                .createdAt(LocalDateTime.now())
+                .categoryId(List.of(2L))
+                .categoriesName(List.of("의료"))
+                .buyCnt(21L)
+                .description("testing2")
+                .imageUrl("http://test2.com").build();
+
+        DataProductResponse.findDataProducts dto3 = DataProductResponse.findDataProducts.builder()
+                .id(3L)
+                .title("test3")
+                .price(3200L)
+                .createdAt(LocalDateTime.now())
+                .categoryId(List.of(2L))
+                .categoriesName(List.of("의료"))
+                .buyCnt(211L)
+                .description("testing3")
+                .imageUrl("http://test3.com").build();
+
+        List<DataProductResponse.findDataProducts> response = List.of(dto1,dto2,dto3);
+
+        given(dataProductService.findTop3Download()).willReturn(response);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/data-products/top3")
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data[].id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data[].buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
+                                        fieldWithPath("data[].title").type(JsonFieldType.STRING).description("상품명"),
+                                        fieldWithPath("data[].price").type(JsonFieldType.NUMBER).description("가격"),
+                                        fieldWithPath("data[].description").type(JsonFieldType.STRING).description("설명"),
+                                        fieldWithPath("data[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
+                                        fieldWithPath("data[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
+                                        fieldWithPath("data[].categoryId").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data[].categoriesName").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들")
+                                        )
+
+                        )
+                )
+        ;
+
+    }
+
+    @Test
+    @DisplayName("상품 상세 조회(단건 조회)")
+    void findDataProduct() throws Exception{
+
+        //given
+        List<Long> categoryId = new ArrayList<>();
+        categoryId.add(1l);
+        categoryId.add(2l);
+
+        List<String> categoriesName = new ArrayList<>();
+        categoriesName.add("패션");
+        categoriesName.add("의료");
+
+        List<String> imageUrl = List.of("http://test1.com","http://test2.com");
+
+        DataProductResponse.findDataProduct response = DataProductResponse.findDataProduct.builder()
+                .id(1L)
+                .dataSize(10L)
+                .buyCnt(240L)
+                .title("test 상품")
+                .categoriseName(categoriesName)
+                .createdAt(LocalDateTime.now())
+                .description("테스트 상품 설명")
+                .zipfileName("테스트.zip")
+                .zipfileSize(4000L)
+                .imageUrl(imageUrl)
+                .price(20000L)
+                .build();
+
+        given(dataProductService.findDataProduct(eq(1L))).willReturn(response);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/data-products/{data-product-id}", 1L)
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                pathParameters(
+                                        parameterWithName("data-product-id").description("조회할 데이터 상품 id")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data.dataSize").type(JsonFieldType.NUMBER).description("zip 내부 파일 수량"),
+                                        fieldWithPath("data.buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
+                                        fieldWithPath("data.title").type(JsonFieldType.STRING).description("상품명"),
+                                        fieldWithPath("data.price").type(JsonFieldType.NUMBER).description("가격"),
+                                        fieldWithPath("data.description").type(JsonFieldType.STRING).description("설명"),
+                                        fieldWithPath("data.imageUrl[]").type(JsonFieldType.ARRAY).description("데이터 상품 이미지 URL"),
+                                        fieldWithPath("data.categoriseName[]").type(JsonFieldType.ARRAY).description("데이터 상품 카테고리 이름"),
+                                        fieldWithPath("data.zipfileName").type(JsonFieldType.STRING).optional().description("zip파일 이름"),
+                                        fieldWithPath("data.zipfileSize").type(JsonFieldType.NUMBER).description("zip 파일 크기(GB)"),
+                                        fieldWithPath("data.createdAt").type(JsonFieldType.STRING).description("데이터 상품 생성일시")
+                                )
+                        )
+                )
+        ;
     }
 }

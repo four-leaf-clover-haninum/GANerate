@@ -1,5 +1,6 @@
 package com.example.GANerate.service.user;
 
+import com.example.GANerate.config.SecurityUtils;
 import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.config.redis.RedisUtil;
 import com.example.GANerate.domain.*;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.example.GANerate.enumuration.Result.NOT_FOUND_USER;
 import static com.example.GANerate.enumuration.Result.USERID_NOT_FOUND;
 
 @Service
@@ -37,6 +39,7 @@ public class UserService {
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisUtil redisUtil;
+//    private final UserService userService;
 
     //회원가입
     @Transactional
@@ -148,8 +151,8 @@ public class UserService {
 
     // 좋아요 한 데이터 조회
     @Transactional
-    public List<DataProductResponse.findHeartDataProducts> findHeartDataProducts(Long userId){
-        User user = userRepository.findById(userId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_USER));
+    public List<DataProductResponse.findHeartDataProducts> findHeartDataProducts(){
+        User user = getCurrentUser();
         List<Heart> hearts = user.getHearts();
 
         List<DataProduct> dataProducts = new ArrayList<>();
@@ -224,4 +227,15 @@ public class UserService {
         User user = userRepository.findById(id).get();
         return UserResponse.user.builder().id(user.getId()).build();
     }
+
+    public Long getCurrentUserId() {
+        return SecurityUtils.getCurrentUserId();
+    }
+
+    public User getCurrentUser() {
+        return userRepository
+                .findById(SecurityUtils.getCurrentUserId())
+                .orElseThrow(() -> new CustomException(NOT_FOUND_USER));
+    }
+
 }

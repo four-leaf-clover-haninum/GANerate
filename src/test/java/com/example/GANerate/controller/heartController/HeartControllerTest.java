@@ -21,6 +21,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
@@ -73,6 +74,27 @@ class HeartControllerTest extends RestDocsTestSupport {
 
     @Test
     @DisplayName("상품 좋아요 취소")
-    void unlike() {
+    void unlike() throws Exception {
+        ResultActions result = this.mockMvc.perform(
+                delete("/v1/hearts/{data-product-id}", 1L)
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                pathParameters(
+                                        parameterWithName("data-product-id").description("데이터 키값")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data").type(JsonFieldType.NULL).description("결과 데이터")
+                                )
+                        )
+                );
     }
 }

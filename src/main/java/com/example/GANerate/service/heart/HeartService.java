@@ -1,6 +1,5 @@
 package com.example.GANerate.service.heart;
 
-import com.example.GANerate.config.SecurityUtils;
 import com.example.GANerate.domain.DataProduct;
 import com.example.GANerate.domain.Heart;
 import com.example.GANerate.domain.User;
@@ -11,7 +10,9 @@ import com.example.GANerate.repository.HeartRepository;
 import com.example.GANerate.repository.UserRepository;
 import com.example.GANerate.response.CustomResponseEntity;
 import com.example.GANerate.response.heart.HeartResponse;
+import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +21,18 @@ import static com.example.GANerate.enumuration.Result.NOT_FOUND_USER;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class HeartService {
 
     private final UserRepository userRepository;
     private final DataProductRepository dataProductRepository;
     private final HeartRepository heartRepository;
+    private final UserService userService;
 
     @Transactional
     public HeartResponse like(Long dataProductId) {
-        User user = getCurrentUser();
-//        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_USER));
+        User user = userService.getCurrentUser();
+//        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_USER)); 파라미터로 받은 userId. 이경우 restdocs에서 data null
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
         //이미 좋아요 했으면
@@ -50,8 +53,8 @@ public class HeartService {
     }
 
     @Transactional
-    public void unlike(Long userId, Long dataProductId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(NOT_FOUND_USER));
+    public void unlike(Long dataProductId) {
+        User user = userService.getCurrentUser();
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
         // 삭제시 좋아요가 안되어 있으면 에러
@@ -63,13 +66,13 @@ public class HeartService {
 
     }
 
-    private Long getCurrentUserId() {
-        return SecurityUtils.getCurrentUserId();
-    }
-
-    private User getCurrentUser() {
-        return userRepository
-                .findById(getCurrentUserId())
-                .orElseThrow(() -> new CustomException(NOT_FOUND_USER));
-    }
+//    private Long getCurrentUserId() {
+//        return SecurityUtils.getCurrentUserId();
+//    }
+//
+//    private User getCurrentUser() {
+//        return userRepository
+//                .findById(getCurrentUserId())
+//                .orElseThrow(() -> new CustomException(NOT_FOUND_USER));
+//    }
 }

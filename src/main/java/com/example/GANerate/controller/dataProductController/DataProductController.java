@@ -50,15 +50,50 @@ public class DataProductController {
 //    public CustomResponseEntity<DataProductResponse.createDataProduct> createDataProduct(
 //            @AuthenticationPrincipal final Long userId, @RequestPart final DataProductRequest.createDataProduct request, @RequestPart MultipartFile zipfile){
 //        return CustomResponseEntity.success(dataProductService.createDataProduct(userId, request, zipfile));
-//    }폼
+//    }
 
+    // 데이터 상품 판매시 이미지 파일 올리는 api(즉, 이미지 업로드와 requestDto를 요청하는 로직을 분리 -> mvc test가 잘 안되는 오류 발생)
+
+/*
     //데이터 상품 판매(그냥 폼을 이용해 올리기)
     @PostMapping("/v1/data-products/sale")
     public CustomResponseEntity<DataProductResponse.saleDataProduct> saleDataProducts(
-            @AuthenticationPrincipal Long userId, @RequestPart MultipartFile zipFile,
-            @RequestPart List<MultipartFile> exampleImages, @RequestPart @Valid DataProductRequest.saleProduct request) {
-        return CustomResponseEntity.success(dataProductService.saleDataProduct(userId, zipFile, exampleImages, request));
+            @RequestParam MultipartFile zipFile,
+            @RequestParam List<MultipartFile> exampleImages,
+            @RequestParam String title,
+            @RequestParam Long price,
+            @RequestParam String description,
+            @RequestParam List<Long> categoryIds) {
+        return CustomResponseEntity.success(dataProductService.saleDataProduct(zipFile, exampleImages, title, price, description, categoryIds));
     }
+
+ */
+
+    // 데이터 상품 판매(zip)
+    @PostMapping("/v1/data-products/sale/zip")
+    public CustomResponseEntity<DataProductResponse.saleDataProductZip> saleDataProductsZip(
+            @RequestPart MultipartFile zipFile
+    ) {
+        return CustomResponseEntity.success(dataProductService.saleDataProductZip(zipFile));
+    }
+
+    // 데이터 상품 판매(예시 이미지)
+    @PostMapping("/v1/data-products/sale/image")
+    public CustomResponseEntity<List<DataProductResponse.saleDataProductImages>> saleDataProductsImages(
+            @RequestPart List<MultipartFile> exampleImages
+    ) {
+        return CustomResponseEntity.success(dataProductService.saleDataProductImages(exampleImages));
+    }
+
+
+    // 데이터 상품 판매 폼 작성
+    @PostMapping("/v1/data-products/sale")
+    public CustomResponseEntity<DataProductResponse.saleDataProduct> saleDataProductsForm(
+            @RequestBody @Valid DataProductRequest.saleProduct request
+    ) {
+        return CustomResponseEntity.success(dataProductService.saleDataProductForm(request));
+    }
+
 
 
     // 단일 데이터 상품 조회

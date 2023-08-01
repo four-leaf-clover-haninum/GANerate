@@ -306,7 +306,7 @@ class UserControllerTest extends RestDocsTestSupport {
         Heart heart2 = Heart.builder().user(user).dataProduct(dataProduct2).build();
 
 
-        given(userService.findHeartDataProducts(user.getId())).willReturn(response);
+        given(userService.findHeartDataProducts()).willReturn(response);
 
         ResultActions result = this.mockMvc.perform(
                 get("/v1/users/hearts")
