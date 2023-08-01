@@ -83,7 +83,7 @@ public class DataProduct extends BaseEntity{
     }
 
     public void addProductCategory(ProductCategory productCategory){
-        productCategories.add(productCategory);
+        this.productCategories.add(productCategory);
         productCategory.setDataProduct(this);
     }
 }
