@@ -2,6 +2,8 @@ package com.example.GANerate.config;
 
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
+import com.example.GANerate.repository.UserRepository;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
