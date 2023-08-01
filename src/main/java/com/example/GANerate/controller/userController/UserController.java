@@ -61,8 +61,8 @@ public class UserController {
 
     //좋아요한 데이터 상품 목록
     @GetMapping("/v1/users/hearts")
-    public CustomResponseEntity<List<DataProductResponse.findHeartDataProducts>> findHeartDataProducts(@AuthenticationPrincipal Long userId){
-        return CustomResponseEntity.success(userService.findHeartDataProducts(userId));
+    public CustomResponseEntity<List<DataProductResponse.findHeartDataProducts>> findHeartDataProducts(){
+        return CustomResponseEntity.success(userService.findHeartDataProducts());
     }
 
 
