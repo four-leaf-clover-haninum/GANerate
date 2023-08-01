@@ -17,13 +17,14 @@ jobs:
         with:
           java-version: 11
 
-      - uses: actions/checkout@v2
+      - run: mkdir -p ./src/main/resources
       - run: touch ./src/main/resources/application.yml
       - run: echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
       - run: cat ./src/main/resources/application.yml
 
-      - uses: actions/checkout@v2
-      - run: touch ./src/main/resources/application-aws.yml
+
+#      - run: mkdir -p ./src/main/resources
+      - run: touch ./src/main/resources/application.yml
       - run: echo "${{ secrets.APPLICATION_AWS }}" > ./src/main/resources/application-aws.yml
       - run: cat ./src/main/resources/application-aws.yml
 
