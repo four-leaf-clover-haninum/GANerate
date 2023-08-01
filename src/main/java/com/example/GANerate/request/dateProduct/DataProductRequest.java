@@ -47,10 +47,15 @@ public class DataProductRequest {
         private String title;
         @NotNull
         private Long price;
+        private Long dataSize;
         @NotNull
         private String description;
         @NotNull
         private List<Long> categoryIds;
+        @NotNull
+        private String zipFileUrl;
+        @NotNull
+        private List<String> imageUrls;
     }
 
 }

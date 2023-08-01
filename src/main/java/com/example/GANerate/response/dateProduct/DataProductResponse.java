@@ -49,16 +49,36 @@ public class DataProductResponse {
         private List<String> imageUrl; // 이거 이미지 예시 여러개 띄울려면 list로 받아야됨.
         private List<String> categoriseName;
         private String zipfileName;
-        private int zipfileSize;
+        private double zipfileSize; //GB사이즈
         private LocalDateTime createdAt;
     }
 
+    //데이터 상품 생성 폼 응답
     @Getter
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class saleDataProduct {
         private Long id;
+    }
+
+    // 데이터 zip 파일 업로드 응답
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class saleDataProductZip {
+        private String zipFileUrl;
+        private Long dataSize;
+    }
+
+    // 데이터 이미지 파일 업로드 응답
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class saleDataProductImages {
+        private String imageUrl;
     }
 
     @Data

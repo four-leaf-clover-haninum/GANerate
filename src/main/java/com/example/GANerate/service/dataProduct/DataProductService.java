@@ -8,15 +8,14 @@ import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.*;
 import com.example.GANerate.request.dateProduct.DataProductRequest;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
+import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -42,7 +41,7 @@ public class DataProductService {
     private final ExampleImageRepository exampleImageRepository;
     private final CategoryRepository categoryRepository;
     private final ProductCategoryRepository product_categoryRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     // 전체 데이터 상품 조회
     @Transactional(readOnly = true)
@@ -89,7 +88,7 @@ public class DataProductService {
     }
 
 
-    // 단일 데이터 제품 상세조회
+    // 단일 데이터 제품 상세조회(data.sql로 넣은 애들은 조회 안됨.왜냐면 연관관계 메서드 설정을 안함 따라서 상품 올리고 그거 조회)
     @Transactional(readOnly = true)
     public DataProductResponse.findDataProduct findDataProduct(Long dataProductId){
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(
@@ -117,7 +116,7 @@ public class DataProductService {
                 .categoriseName(categoriesName)
                 .imageUrl(imageUrls)
                 .zipfileName(dataProduct.getZipFile().getOriginalFileName())
-                .zipfileSize(dataProduct.getZipFile().getSize())
+                .zipfileSize(dataProduct.getZipFile().getSizeGb())
                 .createdAt(dataProduct.getCreatedAt())
                 .build();
 
@@ -152,7 +151,7 @@ public class DataProductService {
                     .originalFileName(originalFileName)
                     .uploadFileName(uploadFileName)
                     .uploadUrl(uploadUrl)
-                    .size((int) zipfile.getSize())
+                    .sizeGb((double) zipfile.getSize()/ (1024*1024*1024))
                     .build();
 
             zipFileRepository.save(zipFile);
@@ -169,25 +168,118 @@ public class DataProductService {
         return dataProductResponse;
     }
 
-    //데이터 판매 제품 생성
+    // 데이터 zip 업로드
     @Transactional
-    public DataProductResponse.saleDataProduct saleDataProduct(
-            Long userId, MultipartFile zipfile,
-            List<MultipartFile> exampleFiles, DataProductRequest.saleProduct request
-    ){
-        // zip파일 유효성 검사 및 파일 갯수 확인
-        Long fileCount = countFilesInZip(zipfile);
+    public DataProductResponse.saleDataProductZip saleDataProductZip(MultipartFile zipFile){
+        Long fileCount = countFilesInZip(zipFile);
 
+        List<String> zipInfo = uploadFile(zipFile);
+
+        ZipFile zip = ZipFile.builder()
+                .originalFileName(zipInfo.get(0))
+                .uploadFileName(zipInfo.get(1))
+                .uploadUrl(zipInfo.get(2))
+                .sizeGb((double) zipFile.getSize()/(1024*1024*1024)) //gb로
+                .build();
+
+        zipFileRepository.save(zip);
+
+         return DataProductResponse.saleDataProductZip.builder()
+                 .zipFileUrl(zipInfo.get(2)).dataSize(fileCount).build();
+    }
+
+    // 데이터 예시 이미지 업로드
+    @Transactional
+    public List<DataProductResponse.saleDataProductImages> saleDataProductImages(List<MultipartFile> exampleImages){
+        List<DataProductResponse.saleDataProductImages> response = new ArrayList<>();
+        for (MultipartFile exampleImageFile : exampleImages) {
+
+            //이미지 파일인지 유효성 검사
+            try {
+                boolean imageFile = isImageFile(exampleImageFile);
+            } catch (CustomException | IOException e) {
+                throw new CustomException(Result.INCORRECT_FILE_TYPE_Only_JPG_JPEG_PNG);
+            }
+
+            List<String> exampleImagesInfo = uploadFile(exampleImageFile);
+
+            ExampleImage exampleImage = ExampleImage.builder()
+                    .originalFileName(exampleImagesInfo.get(0))
+                    .uploadFileName(exampleImagesInfo.get(1))
+                    .imageUrl(exampleImagesInfo.get(2))
+                    .build();
+            exampleImageRepository.save(exampleImage);
+
+            DataProductResponse.saleDataProductImages lmg = DataProductResponse.saleDataProductImages.builder()
+                    .imageUrl(exampleImagesInfo.get(2)).build();
+            response.add(lmg);
+        }
+        return response;
+    }
+
+    //데이터 판매 폼 업로드
+    @Transactional
+    public DataProductResponse.saleDataProduct saleDataProductForm(DataProductRequest.saleProduct request){
+
+        User user = userService.getCurrentUser();
         DataProduct dataProduct = DataProduct.builder()
                 .title(request.getTitle())
-                .buyCnt(0l)
-                .dataSize(fileCount)
+                .buyCnt(0L)
+                .dataSize(request.getDataSize())
                 .price(request.getPrice())
                 .description(request.getDescription())
                 .build();
         dataProductRepository.save(dataProduct);
+        dataProduct.setUser(user);
 
-        List<Long> categoryIds = request.getCategoryIds();
+        for (Long categoryId: request.getCategoryIds()){
+            Category category = categoryRepository.findById(categoryId).get();
+            ProductCategory product_category = ProductCategory.builder()
+                    .dataProduct(dataProduct)
+                    .category(category)
+                    .build();
+
+            dataProduct.addProductCategory(product_category);
+            category.addProductCategory(product_category);
+        }
+
+        ZipFile zipFile = zipFileRepository.findByUploadUrl(request.getZipFileUrl());
+        dataProduct.setZipFile(zipFile); //연관관계 설정
+
+        for (String exampleImageUrl: request.getImageUrls()) {
+
+
+            ExampleImage exampleImage = exampleImageRepository.findByImageUrl(exampleImageUrl);
+            exampleImage.setDataProduct(dataProduct);
+        }
+
+        DataProductResponse.saleDataProduct saleDataProduct = DataProductResponse.saleDataProduct
+                .builder()
+                .id(dataProduct.getId())
+                .build();
+
+        return saleDataProduct;
+    }
+
+/*
+    //데이터 판매 제품 생성
+    @Transactional
+    public DataProductResponse.saleDataProduct saleDataProduct(
+            MultipartFile zipfile,
+            List<MultipartFile> exampleFiles,
+            String title, Long price, String description, List<Long> categoryIds
+    ){
+        // zip파일 유효성 검사 및 파일 갯수 확인(갯수가 이상함)확인 필요
+        Long fileCount = countFilesInZip(zipfile);
+
+        DataProduct dataProduct = DataProduct.builder()
+                .title(title)
+                .buyCnt(0L)
+                .dataSize(fileCount)
+                .price(price)
+                .description(description)
+                .build();
+        dataProductRepository.save(dataProduct);
 
         for (Long categoryId: categoryIds){
             Category category = categoryRepository.findById(categoryId).get();
@@ -196,12 +288,12 @@ public class DataProductService {
                     .category(category)
                     .build();
 
-            product_category.setCategory(category);
-            product_category.setDataProduct(dataProduct);
+            dataProduct.addProductCategory(product_category);
+            category.addProductCategory(product_category);
         }
 
         //회원과의 연관관계 설정
-        User user = userRepository.findById(userId).get();
+        User user = userService.getCurrentUser();
         dataProduct.setUser(user);
 
         List<String> zipInfo = uploadFile(zipfile);
@@ -210,7 +302,7 @@ public class DataProductService {
                 .originalFileName(zipInfo.get(0))
                 .uploadFileName(zipInfo.get(1))
                 .uploadUrl(zipInfo.get(2))
-                .size((int) zipfile.getSize())
+                .sizeGb((double) zipfile.getSize()/(1024*1024*1024)) //gb로
                 .build();
         dataProduct.setZipFile(zipFile); //연관관계 설정
         zipFileRepository.save(zipFile);
@@ -245,6 +337,8 @@ public class DataProductService {
 
         return saleDataProduct;
     }
+
+ */
 
     // 데이터 상품 top3 조회
     @Transactional
@@ -305,7 +399,11 @@ public class DataProductService {
     private List<String> uploadFile(MultipartFile multipartFile) {
         try {
             String originalFilename = multipartFile.getOriginalFilename();
-            String uploadFileName = originalFilename + String.valueOf(System.currentTimeMillis());
+            int index = originalFilename.lastIndexOf(".");
+            String fileName = originalFilename.substring(0,index);
+            String ext = originalFilename.substring(index + 1); //확장자
+
+            String uploadFileName = fileName + String.valueOf(System.currentTimeMillis())+"."+ext;
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(multipartFile.getSize());
             metadata.setContentType(multipartFile.getContentType());
@@ -340,39 +438,73 @@ public class DataProductService {
 
 
     // zip 파일안에 몇개의 이미지가 있는지 확인하고, 파일이 하나도 없는 경우 에러 처리
-    private Long countFilesInZip(MultipartFile zipfile) {
-        Long count = 0L;
-        boolean hasImage = false;
+//    private Long countFilesInZip(MultipartFile zipfile) {
+//        Long count = 0L;
+//        boolean hasImage = false;
+//
+//        try (ZipInputStream zipInputStream = new ZipInputStream(zipfile.getInputStream())) {
+//            ZipEntry zipEntry = zipInputStream.getNextEntry();
+//            while (zipEntry != null) {
+//                // 파일 엔트리인 경우에만 개수를 증가시킴
+//                if (!zipEntry.isDirectory()) {
+//                    // 파일 엔트리의 이름을 소문자로 변환하여 확장자를 추출
+//                    String fileName = zipEntry.getName().toLowerCase();
+//
+//                    if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+//                        count++;
+//                        log.info(String.valueOf(count));
+//                        hasImage = true; // 이미지 파일이 하나라도 있음을 표시
+//                    } else {
+//                        // png 또는 jpg가 아닌 파일이 포함된 경우 에러 처리
+//                        throw new CustomException(Result.INVALID_FILE);
+//                    }
+//                }
+//
+//                // 다음 엔트리로 이동
+//                zipEntry = zipInputStream.getNextEntry();
+//            }
+//
+//            // 이미지 파일이 하나도 없는 경우 에러 처리
+//            if (!hasImage) {
+//                throw new CustomException(Result.NO_IMAGE_FILE);
+//            }
+//
+//            return count;
+//        } catch (IOException e) {
+//            throw new CustomException(Result.FAIL);
+//        }
+//    }
 
-        try (ZipInputStream zipInputStream = new ZipInputStream(zipfile.getInputStream())) {
+
+    public Long countFilesInZip(MultipartFile zipFile) {
+        Long fileCount = 0L;
+        boolean hasImageFile = false;
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                // 파일 엔트리인 경우에만 개수를 증가시킴
                 if (!entry.isDirectory()) {
-                    // 파일 엔트리의 이름을 소문자로 변환하여 확장자를 추출
+                    fileCount++;
+                    // Check if the file has a valid image extension
                     String fileName = entry.getName().toLowerCase();
-
                     if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
-                        count++;
-                        hasImage = true; // 이미지 파일이 하나라도 있음을 표시
+                        hasImageFile = true;
                     } else {
-                        // png 또는 jpg가 아닌 파일이 포함된 경우 에러 처리
                         throw new CustomException(Result.INVALID_FILE);
                     }
-                    zipInputStream.closeEntry();
                 }
+                zipInputStream.closeEntry();
             }
-
-            // 이미지 파일이 하나도 없는 경우 에러 처리
-            if (!hasImage) {
-                throw new CustomException(Result.NO_IMAGE_FILE);
-            }
-
-            return count;
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (fileCount == 0) {
             throw new CustomException(Result.FAIL);
         }
+        return fileCount/2; //왜 파일 갯수가 2배 되어서 나오는지 모르겠음;;;
     }
+
 
     private DataProductResponse.findDataProducts mapToDataProductResponse(DataProduct dataProduct) {
         return DataProductResponse.findDataProducts.builder()
