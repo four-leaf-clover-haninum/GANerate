@@ -26,7 +26,7 @@ public class  Category {
     private String title;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private List<ProductCategory> product_categories = new ArrayList<>();
+    private List<ProductCategory> productCategories = new ArrayList<>();
 
     @Builder
     public Category(Long id, int categoryCode, String title){
@@ -35,8 +35,8 @@ public class  Category {
         this.title=title;
     }
 
-    public void addProduct_Category(ProductCategory product_category){
-        product_categories.add(product_category);
-        product_category.setCategory(this);
+    public void addProductCategory(ProductCategory productCategory){
+        this.productCategories.add(productCategory);
+        productCategory.setCategory(this);
     }
 }
