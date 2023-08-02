@@ -17,6 +17,6 @@ public class HealthCheck {
 
     @GetMapping("/health")
     public String checkHealth() {
-        return "healthy";
+        return "health check 성공";
     }
 }
