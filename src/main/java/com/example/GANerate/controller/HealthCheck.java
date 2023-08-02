@@ -17,6 +17,6 @@ public class HealthCheck {
 
     @GetMapping("/health")
     public String checkHealth() {
-        return "health check 성공 was kill";
+        return "health check 성공 was kill 8082";
     }
 }
