@@ -28,7 +28,7 @@ jobs:
 
 
 #      - run: mkdir -p ./src/main/resources
-      - run: touch ./src/main/resources/application.yml
+      - run: touch ./src/main/resources/application-aws.yml
       - run: echo "${{ secrets.APPLICATION_AWS }}" > ./src/main/resources/application-aws.yml
       - run: cat ./src/main/resources/application-aws.yml
 
