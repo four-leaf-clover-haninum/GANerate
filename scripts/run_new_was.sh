@@ -11,7 +11,6 @@ else
   echo "> No WAS is connected to nginx"
 fi
 
-CURRENT_PID=$(lsof -Fp -i TCP:${CURRENT_PORT} | grep -Po 'p[0-9]+' | grep -Po '[0-9]+')
 TARGET_PID=$(lsof -Fp -i TCP:${TARGET_PORT} | grep -Po 'p[0-9]+' | grep -Po '[0-9]+')
 
 if [ ! -z ${TARGET_PID} ]; then
@@ -25,9 +24,5 @@ fi
 
 nohup java -jar -Dserver.port=${TARGET_PORT} /home/ec2-user/GANerate/build/libs/GANerate-0.0.1-SNAPSHOT.jar > /home/ec2-user/nohup.out 2>&1 &
 echo "> Now new WAS runs at ${TARGET_PORT}."
-
-if [ ! -z ${TARGET_PID} ]; then
-  sudo kill ${CURRENT_PID}
-fi
 
 exit 0
