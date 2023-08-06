@@ -22,7 +22,7 @@ public class Order extends BaseEntity{
     @Column(name = "order_id")
     private Long id;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @NotNull
     private OrderStatus status;
 
