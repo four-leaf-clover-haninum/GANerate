@@ -14,7 +14,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
                 //이후에 프론트 ec2의 아이피로 아래의 3000번을 변경.
 //                .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://3.35.255.4:8080", "http://3.35.255.4:8081", "http://3.35.255.4:80", "http://3.35.255.4:8082")
-                .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://3.35.255.4") //혹은 http://3.35.255.4:80 이것 까지 열어보기
+                .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://ec2-3-35-255-4.ap-northeast-2.compute.amazonaws.com") //혹은 http://3.35.255.4:80 이것 까지 열어보기
 
 //                .exposedHeaders("Authorization") // 'Authorization' 헤더 값을 받아온다
                 .allowedMethods(
