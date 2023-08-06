@@ -1,5 +1,6 @@
 package com.example.GANerate.response.dateProduct;
 
+import com.example.GANerate.enumuration.OrderStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -94,5 +95,18 @@ public class DataProductResponse {
         private String imageUrl;
         private LocalDateTime createdAt;
         private List<String> categoriesName;
+    }
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class orderDataProducts {
+        private Long id;
+        private String title;
+        private Long price;
+        private String imageUrl;
+        private LocalDateTime createdAt;
+        private List<String> categoriesName;
+        private OrderStatus orderStatus;
     }
 }
