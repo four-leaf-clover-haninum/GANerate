@@ -1,17 +1,21 @@
 package com.example.GANerate.controller.userController;
 
+import com.example.GANerate.domain.ZipFile;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.CustomResponseEntity;
+import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.response.user.UserResponse;
 import com.example.GANerate.service.user.EmailService;
 import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -87,6 +91,18 @@ public class UserController {
 
 
     //구매 상품 조회
+    @GetMapping("/v1/users/orders")
+    public CustomResponseEntity<List<DataProductResponse.orderDataProducts>> findOrderDataProduct(){
+        return CustomResponseEntity.success(userService.findOrderDataProduct());
+    }
+
+    // 구매한 데이터 상품 다운로드
+    @PostMapping("/v1/users/data-products/{data-product-id}")
+    public CustomResponseEntity<ZipFileResponse.downloadZip> downloadDataProduct(@PathVariable("data-product-id") Long dataProductId) throws IOException {
+        return CustomResponseEntity.success(userService.downloadDataProduct(dataProductId));
+    }
+
+    //판매 업로드 상품 조회 - 이후에 수정 및 삭제
 
 
 
