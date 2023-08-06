@@ -31,12 +31,16 @@ public class ZipFile {
     @Column(length = 15000)
     private String uploadUrl;
 
+    // 데이터 생성 요청과 데이터 판매 zip을 구분하기 위한 필드
+    private boolean isExamZip;
+
     @Builder
-    public ZipFile(Long id, String originalFileName, String uploadFileName, double sizeGb, String uploadUrl) {
+    public ZipFile(Long id, String originalFileName, String uploadFileName, double sizeGb, String uploadUrl, boolean isExamZip) {
         this.id = id;
         this.originalFileName = originalFileName;
         this.uploadFileName = uploadFileName;
         this.sizeGb = sizeGb;
         this.uploadUrl = uploadUrl;
+        this.isExamZip = isExamZip;
     }
 }
