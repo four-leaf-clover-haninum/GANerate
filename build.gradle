@@ -66,7 +66,7 @@ dependencies {
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.8'
 
 	// portone
-	implementation 'com.github.iamport:iamport-rest-client-java:0.2.21'
+//	implementation 'com.github.iamport:iamport-rest-client-java:0.2.21' 안됨
 
 	testImplementation 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api'
