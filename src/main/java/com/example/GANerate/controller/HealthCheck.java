@@ -2,7 +2,9 @@ package com.example.GANerate.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class HealthCheck {
 
     @Value("${version}")
@@ -15,7 +17,6 @@ public class HealthCheck {
 
     @GetMapping("/health")
     public String checkHealth() {
-        return "healthy";
+        return "health check 성공 was kill 8082";
     }
-
 }

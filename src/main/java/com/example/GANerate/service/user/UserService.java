@@ -1,18 +1,30 @@
 package com.example.GANerate.service.user;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.util.IOUtils;
 import com.example.GANerate.config.SecurityUtils;
 import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.config.redis.RedisUtil;
 import com.example.GANerate.domain.*;
+import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
-import com.example.GANerate.repository.HeartRepository;
+import com.example.GANerate.repository.DataProductRepository;
 import com.example.GANerate.repository.UserRepository;
 import com.example.GANerate.request.user.UserRequest;
+import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.response.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -21,6 +33,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +53,12 @@ public class UserService {
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisUtil redisUtil;
-//    private final UserService userService;
+    private final DataProductRepository dataProductRepository;
+    private final AmazonS3 amazonS3;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
 
     //회원가입
     @Transactional
@@ -186,6 +205,77 @@ public class UserService {
             response.add(findHeartDataProducts);
         }
         return response;
+    }
+
+    // 구매한 상품 조회(다운로드 가능)
+    @Transactional(readOnly = true)
+    public List<DataProductResponse.orderDataProducts> findOrderDataProduct(){
+        User user = getCurrentUser();
+        List<Order> orders = user.getOrders();
+
+        List<DataProductResponse.orderDataProducts> orderDone = new ArrayList<>(); //다운로드 가능하거나 아직 다운은 못하지만 구매한 상품을 조회(취소 상품은 x)
+        for (Order order : orders) {
+            if (order.getStatus() == OrderStatus.CANCEL){
+                throw new CustomException(Result.FAIL);
+            }
+            List<OrderItem> orderItems = order.getOrderItems();
+            for (OrderItem orderItem : orderItems) {
+                DataProduct dataProduct = orderItem.getDataProduct();
+
+                List<ExampleImage> exampleImages = dataProduct.getExampleImages();
+                ExampleImage exampleImage = exampleImages.get(0);
+                String imageUrl = exampleImage.getImageUrl();
+
+                List<ProductCategory> productCategories = dataProduct.getProductCategories();
+                List<String> categoriesName = new ArrayList<>();
+                for (ProductCategory productCategory : productCategories) {
+                    String title = productCategory.getCategory().getTitle();
+                    categoriesName.add(title);
+                }
+
+                DataProductResponse.orderDataProducts orderDataProducts = DataProductResponse.orderDataProducts.builder()
+                        .id(dataProduct.getId())
+                        .title(dataProduct.getTitle())
+                        .price(dataProduct.getPrice())
+                        .imageUrl(imageUrl)
+                        .createdAt(order.getCreatedAt())
+                        .categoriesName(categoriesName)
+                        .orderStatus(order.getStatus()) //이게 DONE 이면 다운로드 버튼 활성화
+                        .build();
+
+                orderDone.add(orderDataProducts);
+            }
+        }
+        return orderDone;
+    }
+
+    // 구매한 상춤중 다운로드 가능한 상품 다운로드
+    @Transactional
+    public ZipFileResponse.downloadZip downloadDataProduct(Long dataProductId) throws IOException {
+        User user = getCurrentUser();
+        List<Order> orders = user.getOrders();
+        DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
+        boolean validate = false;
+
+        for (Order order : orders) {
+            List<OrderItem> orderItems = order.getOrderItems();
+            for (OrderItem orderItem : orderItems) {
+                if (orderItem.getDataProduct()==dataProduct){
+                    log.info(orderItem.getDataProduct().getTitle());
+                    validate=true;
+                }
+            }
+        }
+
+        if (validate == true) {
+            ZipFile zipFile = dataProduct.getZipFile();
+            String originalFileName = zipFile.getOriginalFileName();
+            String downloadUrl = zipFile.getUploadUrl();
+
+            return ZipFileResponse.downloadZip.builder().originalZipName(originalFileName).s3Url(downloadUrl).build();
+        }else{
+            throw new CustomException(Result.NOT_BUY_PRODUCT);
+        }
     }
 
     private void validateDuplicatedUserEmail(String userEmail) {

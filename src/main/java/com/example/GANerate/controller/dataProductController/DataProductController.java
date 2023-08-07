@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -45,15 +46,14 @@ public class DataProductController {
     }
 
 
-    // 데이터 상품 생성(GANERTE 이용)
-//    @PostMapping("/dataProduct")
-//    public CustomResponseEntity<DataProductResponse.createDataProduct> createDataProduct(
-//            @AuthenticationPrincipal final Long userId, @RequestPart final DataProductRequest.createDataProduct request, @RequestPart MultipartFile zipfile){
-//        return CustomResponseEntity.success(dataProductService.createDataProduct(userId, request, zipfile));
-//    }
+    // 데이터 상품 생성(GANerate 이용)
+    @PostMapping("/v1/data-products")
+    public CustomResponseEntity<DataProductResponse.createDataProduct> createDataProduct(
+            @RequestPart final DataProductRequest.createProduct request, @RequestPart MultipartFile zipFile) throws IOException {
+        return CustomResponseEntity.success(dataProductService.createDataProduct(request, zipFile));
+    }
 
     // 데이터 상품 판매시 이미지 파일 올리는 api(즉, 이미지 업로드와 requestDto를 요청하는 로직을 분리 -> mvc test가 잘 안되는 오류 발생)
-
 /*
     //데이터 상품 판매(그냥 폼을 이용해 올리기)
     @PostMapping("/v1/data-products/sale")
@@ -95,7 +95,6 @@ public class DataProductController {
     }
 
 
-
     // 단일 데이터 상품 조회
     @GetMapping("/v1/data-products/{data-product-id}")
     public CustomResponseEntity<DataProductResponse.findDataProduct> findDataProduct(@PathVariable("data-product-id") Long dataProductId){
@@ -112,5 +111,6 @@ public class DataProductController {
 //        return CustomResponseEntity.success(dataProductService.findDataProductsFiltered(request));
 //    }
 
-    // 구매한 데이터 상품 다운로드
+
+
 }

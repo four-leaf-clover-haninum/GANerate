@@ -36,7 +36,11 @@ public enum Result {
     DUPLICATED_HEART(5001, "좋아요 중복"),
 
     //카테고리
-    NON_EXIST_CATEGORY(6001, "존재하지 않는 카테고리");
+    NON_EXIST_CATEGORY(6001, "존재하지 않는 카테고리"),
+
+    //ORDER
+    NOT_BUY_PRODUCT(7001, "구매하지 않은 데이터 상품"),
+    FAIL_CREATE_DATA(7002, "데이터 생성 실패");
 
 
 

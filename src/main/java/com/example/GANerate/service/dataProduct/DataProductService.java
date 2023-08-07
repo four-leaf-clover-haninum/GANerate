@@ -7,6 +7,7 @@ import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.*;
 import com.example.GANerate.request.dateProduct.DataProductRequest;
+import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -42,6 +45,8 @@ public class DataProductService {
     private final CategoryRepository categoryRepository;
     private final ProductCategoryRepository product_categoryRepository;
     private final UserService userService;
+    private final RestTemplate restTemplate; // 근데 이렇게 빈으로 넣으면 인스턴스가 하나만 셍성돼서 다른 사영자들 동시 요청들어올대 처리 가능
+
 
     // 전체 데이터 상품 조회
     @Transactional(readOnly = true)
@@ -123,49 +128,56 @@ public class DataProductService {
         return dto;
     }
 
-    // 플라스크와 비동기 통신해야한다. 이건 데이터 생성 요청 폼 데이터 생성인 경우
+    // 이 요청은 비동기 처리해야됨. 결제 완료후 프론트에서 요청해야함. 추가로 user가 생성한 데이터 상품이나 구매한 데이터 상품으로 연관관계 설정
     @Transactional
-    public DataProductResponse.createDataProduct createProduct(Long userId, DataProductRequest.createProduct request, MultipartFile zipfile) throws IOException {
+    public DataProductResponse.createDataProduct createDataProduct(DataProductRequest.createProduct request, MultipartFile zipFile) throws IOException {
+
+        //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전송
+
+
+        // DataProduct 생성
         DataProduct dataProduct = DataProduct.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .buyCnt(0L)
-                .price(request.getPrice())
+                .price(request.getDataSize()*1000) // 가격은 별도 로직 필요
                 .dataSize(request.getDataSize())
                 .build();
         dataProductRepository.save(dataProduct);
 
-        try{
-            String originalFileName = zipfile.getOriginalFilename();
-            String uploadFileName = originalFileName + String.valueOf(System.currentTimeMillis());
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentLength(zipfile.getSize());
-            metadata.setContentType(zipfile.getContentType());
+        // s3에 업로드
+        List<String> fileInfo = uploadFile(zipFile);
+        String originalFileName = fileInfo.get(0);
+        String uploadFileName = fileInfo.get(1);
+        String uploadUrl = fileInfo.get(2);
 
-            amazonS3.putObject(bucket, uploadFileName, zipfile.getInputStream(), metadata);
+        //전달받은 zip 내부에는 이미지만 있는지 검증
 
-            // 업로드 url 가져오기
-            String uploadUrl = amazonS3.getUrl(bucket, uploadFileName).toString();
 
-            ZipFile zipFile = ZipFile.builder()
-                    .originalFileName(originalFileName)
-                    .uploadFileName(uploadFileName)
-                    .uploadUrl(uploadUrl)
-                    .sizeGb((double) zipfile.getSize()/ (1024*1024*1024))
-                    .build();
-
-            zipFileRepository.save(zipFile);
-        }catch (CustomException e){
-
-        }
-
-        DataProductResponse.createDataProduct dataProductResponse = DataProductResponse.createDataProduct.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .price(request.getPrice())
+        //zip 객체 생성
+        ZipFile examZipFile = ZipFile.builder()
+                .originalFileName(originalFileName)
+                .uploadFileName(uploadFileName)
+                .uploadUrl(uploadUrl)
+                .sizeGb((double) zipFile.getSize()/ (1024*1024*1024))
+                .isExamZip(true) // 예시 zip이므로 true
                 .build();
 
-        return dataProductResponse;
+        // 플라스크로 전달할 zipFileId
+        Long examZipId = examZipFile.getId();
+
+        // 플라스크로 전달
+        try{
+            String url = "http://127.0.0.1:5000/ganerate"; //추후 ec2꺼로 변경
+            ZipFileResponse.ganeratedZip requestToFlask = ZipFileResponse.ganeratedZip.builder().zipfileId(examZipId).build(); // 파일 사이즈 전달
+            ZipFileResponse.ganeratedZip ganeratedZip = restTemplate.postForObject(url, requestToFlask, ZipFileResponse.ganeratedZip.class);
+            log.info(String.valueOf(ganeratedZip.getZipfileId()));
+
+            return DataProductResponse.createDataProduct.builder().build();
+        } catch (RestClientException e) {
+            throw new CustomException(Result.FAIL_CREATE_DATA);
+        }
+        // 응답 zipFileId를 통해 dataProduct와 연관관계 설정
     }
 
     // 데이터 zip 업로드
@@ -180,6 +192,7 @@ public class DataProductService {
                 .uploadFileName(zipInfo.get(1))
                 .uploadUrl(zipInfo.get(2))
                 .sizeGb((double) zipFile.getSize()/(1024*1024*1024)) //gb로
+                .isExamZip(false)
                 .build();
 
         zipFileRepository.save(zip);
@@ -396,6 +409,7 @@ public class DataProductService {
 //        return null;
 //    }
 
+    // s3에 업로드
     private List<String> uploadFile(MultipartFile multipartFile) {
         try {
             String originalFilename = multipartFile.getOriginalFilename();
@@ -409,6 +423,7 @@ public class DataProductService {
             metadata.setContentType(multipartFile.getContentType());
             amazonS3.putObject(bucket, uploadFileName, multipartFile.getInputStream(), metadata);
             String uploadUrl = amazonS3.getUrl(bucket, uploadFileName).toString();
+
             List<String> list = new ArrayList<>();
             list.add(originalFilename);
             list.add(uploadFileName);
@@ -475,7 +490,7 @@ public class DataProductService {
 //        }
 //    }
 
-
+    // zip 안에 이미지 파일 몇개인지 세는 작업
     public Long countFilesInZip(MultipartFile zipFile) {
         Long fileCount = 0L;
         boolean hasImageFile = false;

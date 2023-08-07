@@ -18,12 +18,11 @@ public class DataProductRequest {
     @NoArgsConstructor
     public static class createProduct{
         private String title;
-        private Long price;
         private String description;
 //        private String imageUrl;
         private Long dataSize; // 원하는 이미지 수량
-        private LocalDateTime createdAt;
-        private List<ProductCategory> product_categories;
+//        private LocalDateTime createdAt;
+        private List<Long> categoryIds;
     }
 
     @Getter
