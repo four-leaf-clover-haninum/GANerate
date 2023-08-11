@@ -22,11 +22,6 @@ public class HeartController {
         return CustomResponseEntity.success(heartService.like(dataProductId));
     }
 
-//    @PostMapping("/v1/hearts/{data-product-id}")
-//    public CustomResponseEntity<HeartResponse> like(@AuthenticationPrincipal userId, @PathVariable("data-product-id") Long dataProductId) {
-//        return CustomResponseEntity.success(heartService.like(dataProductId));
-//    }
-
     // 좋아요 취소
     @DeleteMapping("/v1/hearts/{data-product-id}")
     public CustomResponseEntity unlike(@PathVariable("data-product-id") Long dataProductId){
