@@ -24,6 +24,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://jitpack.io' }
 }
 
 // 이 부분도 추가
@@ -66,7 +67,7 @@ dependencies {
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.8'
 
 	// portone
-//	implementation 'com.github.iamport:iamport-rest-client-java:0.2.21' 안됨
+	implementation 'com.github.iamport:iamport-rest-client-java:0.2.21'
 
 	testImplementation 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api'
