@@ -3,13 +3,13 @@ package com.example.GANerate.controller.dataProductController;
 import com.example.GANerate.request.dateProduct.DataProductRequest;
 import com.example.GANerate.response.CustomResponseEntity;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
+import com.example.GANerate.service.dataProduct.DataProductSearchService;
 import com.example.GANerate.service.dataProduct.DataProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,12 +22,13 @@ import java.util.List;
 public class DataProductController {
 
     private final DataProductService dataProductService;
+    private final DataProductSearchService dataProductSearchService;
+
     //페이징 처리해서 데이터 상품 목록가져오기 (최신순으로)
     @GetMapping("/v1/data-products")
     public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProducts(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) @Valid
-    Pageable pageable)
-    {
+    Pageable pageable){
         return CustomResponseEntity.success(dataProductService.findDataProducts(pageable));
     }
 
@@ -46,54 +47,33 @@ public class DataProductController {
     }
 
 
-    // 데이터 상품 생성(GANerate 이용)
+    // 데이터 상품 생성(GANerate 이용) 결제후 요청해야함.
     @PostMapping("/v1/data-products")
     public CustomResponseEntity<DataProductResponse.createDataProduct> createDataProduct(
             @RequestPart final DataProductRequest.createProduct request, @RequestPart MultipartFile zipFile) throws IOException {
         return CustomResponseEntity.success(dataProductService.createDataProduct(request, zipFile));
     }
 
-    // 데이터 상품 판매시 이미지 파일 올리는 api(즉, 이미지 업로드와 requestDto를 요청하는 로직을 분리 -> mvc test가 잘 안되는 오류 발생)
-/*
-    //데이터 상품 판매(그냥 폼을 이용해 올리기)
-    @PostMapping("/v1/data-products/sale")
-    public CustomResponseEntity<DataProductResponse.saleDataProduct> saleDataProducts(
-            @RequestParam MultipartFile zipFile,
-            @RequestParam List<MultipartFile> exampleImages,
-            @RequestParam String title,
-            @RequestParam Long price,
-            @RequestParam String description,
-            @RequestParam List<Long> categoryIds) {
-        return CustomResponseEntity.success(dataProductService.saleDataProduct(zipFile, exampleImages, title, price, description, categoryIds));
-    }
-
- */
-
     // 데이터 상품 판매(zip)
     @PostMapping("/v1/data-products/sale/zip")
     public CustomResponseEntity<DataProductResponse.saleDataProductZip> saleDataProductsZip(
-            @RequestPart MultipartFile zipFile
-    ) {
+            @RequestPart MultipartFile zipFile) {
         return CustomResponseEntity.success(dataProductService.saleDataProductZip(zipFile));
     }
 
     // 데이터 상품 판매(예시 이미지)
     @PostMapping("/v1/data-products/sale/image")
     public CustomResponseEntity<List<DataProductResponse.saleDataProductImages>> saleDataProductsImages(
-            @RequestPart List<MultipartFile> exampleImages
-    ) {
+            @RequestPart List<MultipartFile> exampleImages) {
         return CustomResponseEntity.success(dataProductService.saleDataProductImages(exampleImages));
     }
-
 
     // 데이터 상품 판매 폼 작성
     @PostMapping("/v1/data-products/sale")
     public CustomResponseEntity<DataProductResponse.saleDataProduct> saleDataProductsForm(
-            @RequestBody @Valid DataProductRequest.saleProduct request
-    ) {
+            @RequestBody @Valid DataProductRequest.saleProduct request) {
         return CustomResponseEntity.success(dataProductService.saleDataProductForm(request));
     }
-
 
     // 단일 데이터 상품 조회
     @GetMapping("/v1/data-products/{data-product-id}")
@@ -101,16 +81,9 @@ public class DataProductController {
         return CustomResponseEntity.success(dataProductService.findDataProduct(dataProductId));
     }
 
-    // 데이터 상품 구매(아님 Order에서 주문 주문내역 조회, 주문 취소 등을 개발?
-
     // 카테고리, 가격, 상품명 조건 받아서 검색
-//    @GetMapping("/v1/data-products/filter")
-//    public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProductsFiltered(@RequestBody DataProductRequest.filter request
-//            //페이지 정보를 dto에 넣어서 보내자
-//                                                                                                     ){
-//        return CustomResponseEntity.success(dataProductService.findDataProductsFiltered(request));
-//    }
-
-
-
+    @GetMapping("/v1/data-products/filter")
+    public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProductsFiltered(@RequestBody DataProductRequest.filter request){
+        return CustomResponseEntity.success(dataProductSearchService.findDataProductsFiltered(request));
+    }
 }
