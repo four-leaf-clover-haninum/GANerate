@@ -21,6 +21,9 @@ public class ZipFileResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ganeratedZip{
-        private Long zipfileId;
+        private String originalFileName;
+        private String uploadFileName;
+        private String uploadUrl;
+        private double sizeGb;
     }
 }
