@@ -51,6 +51,7 @@ public class DataProductService {
     private final ProductCategoryRepository productCategoryRepository;
     private final UserService userService;
     private final RestTemplate restTemplate; // 근데 이렇게 빈으로 넣으면 인스턴스가 하나만 셍성돼서 다른 사영자들 동시 요청들어올대 처리 가능?
+    private final OrderRepository orderRepository;
 
 
     // 전체 데이터 상품 조회
@@ -141,7 +142,9 @@ public class DataProductService {
         User user = userService.getCurrentUser();
 
         // 결제 로직 구성후 변경(이건 결제 파트에서 해야함. 그래야 해당 메서드를 통해 ORDER->DONE이 됨)
-        // orderitems를 찾아서 연관관계 설정후 setdataproduct, order 찾아서 done으로 바꿀거임
+        Long orderId = request.getOrderId();
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
+
 
         //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전달
         // DataProduct 생성
