@@ -3,9 +3,11 @@ package com.example.GANerate.service.dataProduct;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.example.GANerate.domain.*;
+import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.*;
+import com.example.GANerate.request.ZipFileRequest;
 import com.example.GANerate.request.dateProduct.DataProductRequest;
 import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
@@ -14,13 +16,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +48,9 @@ public class DataProductService {
     private final ZipFileRepository zipFileRepository;
     private final ExampleImageRepository exampleImageRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductCategoryRepository product_categoryRepository;
+    private final ProductCategoryRepository productCategoryRepository;
     private final UserService userService;
-    private final RestTemplate restTemplate; // 근데 이렇게 빈으로 넣으면 인스턴스가 하나만 셍성돼서 다른 사영자들 동시 요청들어올대 처리 가능
+    private final RestTemplate restTemplate; // 근데 이렇게 빈으로 넣으면 인스턴스가 하나만 셍성돼서 다른 사영자들 동시 요청들어올대 처리 가능?
 
 
     // 전체 데이터 상품 조회
@@ -84,7 +89,7 @@ public class DataProductService {
         Optional<Category> findCategory = categoryRepository.findById(categoryId);
         if (findCategory.isPresent()){
             Category category = findCategory.get();
-            List<ProductCategory> product_categories = product_categoryRepository.findAllByCategory(category);
+            List<ProductCategory> product_categories = productCategoryRepository.findAllByCategory(category);
             Page<DataProduct> dataProducts = dataProductRepository.findAllByProductCategoriesIn(product_categories, pageable);
             return dataProducts.map(this::mapToDataProductResponse);
         }else {
@@ -129,12 +134,18 @@ public class DataProductService {
     }
 
     // 이 요청은 비동기 처리해야됨. 결제 완료후 프론트에서 요청해야함. 추가로 user가 생성한 데이터 상품이나 구매한 데이터 상품으로 연관관계 설정
+    // order 생성(주문 로직단에서 무조건 생성해서 이 메서드로 넘겨줘야함.) -> dataproduct 생성 -> orderItem 생성 -> zip 생성 -> examplimage 생성
     @Transactional
     public DataProductResponse.createDataProduct createDataProduct(DataProductRequest.createProduct request, MultipartFile zipFile) throws IOException {
 
-        //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전송
+        User user = userService.getCurrentUser();
 
+        // 결제 로직 구성후 변경(이건 결제 파트에서 해야함. 그래야 해당 메서드를 통해 ORDER->DONE이 됨)
+        Order order = Order.builder()
+                .orderStatus(OrderStatus.ORDER).build();
+        order.setUser(user);
 
+        //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전달
         // DataProduct 생성
         DataProduct dataProduct = DataProduct.builder()
                 .title(request.getTitle())
@@ -145,39 +156,73 @@ public class DataProductService {
                 .build();
         dataProductRepository.save(dataProduct);
 
+        // 결제 로직 구성후 변경
+        OrderItem orderItem = OrderItem.builder()
+                .order(order)
+                .dataProduct(dataProduct)
+                .build();
+        orderItem.setOrder(order);
+
+
+        // 카테고리 가져오기
+        List<Long> categoryIds = request.getCategoryIds();
+        List<Category> categories = new ArrayList<>();
+        for (Long categoryId : categoryIds) {
+            Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new CustomException(Result.NON_EXIST_CATEGORY));
+            categories.add(category);
+        }
+
+        for (Category category : categories) {
+            ProductCategory productCategory = ProductCategory.builder().category(category).dataProduct(dataProduct).build();
+            productCategoryRepository.save(productCategory);
+            // 연관관계 설정
+            dataProduct.addProductCategory(productCategory);
+            category.addProductCategory(productCategory);
+        }
+
+        //전달받은 zip 내부에는 이미지만 있는지 검증
+        isImageInZip(zipFile);
+
         // s3에 업로드
         List<String> fileInfo = uploadFile(zipFile);
+
         String originalFileName = fileInfo.get(0);
         String uploadFileName = fileInfo.get(1);
         String uploadUrl = fileInfo.get(2);
 
-        //전달받은 zip 내부에는 이미지만 있는지 검증
-
-
-        //zip 객체 생성
-        ZipFile examZipFile = ZipFile.builder()
-                .originalFileName(originalFileName)
-                .uploadFileName(uploadFileName)
-                .uploadUrl(uploadUrl)
-                .sizeGb((double) zipFile.getSize()/ (1024*1024*1024))
-                .isExamZip(true) // 예시 zip이므로 true
-                .build();
-
-        // 플라스크로 전달할 zipFileId
-        Long examZipId = examZipFile.getId();
-
+        // 플라스크로 전달할 정보: 오리지날 이름, 업로드 유알엘, 생성 개수
+        Long createDataSize = request.getDataSize();
         // 플라스크로 전달
         try{
             String url = "http://127.0.0.1:5000/ganerate"; //추후 ec2꺼로 변경
-            ZipFileResponse.ganeratedZip requestToFlask = ZipFileResponse.ganeratedZip.builder().zipfileId(examZipId).build(); // 파일 사이즈 전달
-            ZipFileResponse.ganeratedZip ganeratedZip = restTemplate.postForObject(url, requestToFlask, ZipFileResponse.ganeratedZip.class);
-            log.info(String.valueOf(ganeratedZip.getZipfileId()));
+            // 요청으로 생성할 데이터 수와 예시 zipid 전달
+            ZipFileRequest.ganerateZip requestToFlask = ZipFileRequest.ganerateZip.builder().uploadUrl(uploadUrl).originalFileName(originalFileName).uploadFileName(uploadFileName).createDataSize(createDataSize).build(); // 파일 사이즈 전달
 
+            log.info("=======");
+            // 응답으로 생성된 데이터 수와 실제 zipid 전달
+            ZipFileResponse.ganeratedZip ganeratedZip = restTemplate.postForObject(url, requestToFlask, ZipFileResponse.ganeratedZip.class);
+
+            ZipFile uploadZipFile = ZipFile.builder()
+                    .uploadFileName(ganeratedZip.getUploadFileName())
+                    .uploadUrl(ganeratedZip.getUploadUrl())
+                    .originalFileName(ganeratedZip.getOriginalFileName())
+                    .sizeGb(ganeratedZip.getSizeGb())
+                    .build();
+
+            order.setStatus(OrderStatus.DONE);
+
+            zipFileRepository.save(uploadZipFile);
+            dataProduct.setZipFile(uploadZipFile);
+            dataProduct.setUser(user);
+
+            // 추가로 zip File 로 부터 이미지 3장 뽑아와서 example 이미지로 만들고 연관관계
+
+
+            // return 값으로 뭘 줘야될까? 데이터 생성되었다 다운로드 창에서 확인해라 정도만 주면될듯? 굳이 데이터 상품 정보를?
             return DataProductResponse.createDataProduct.builder().build();
         } catch (RestClientException e) {
             throw new CustomException(Result.FAIL_CREATE_DATA);
         }
-        // 응답 zipFileId를 통해 dataProduct와 연관관계 설정
     }
 
     // 데이터 zip 업로드
@@ -274,85 +319,6 @@ public class DataProductService {
         return saleDataProduct;
     }
 
-/*
-    //데이터 판매 제품 생성
-    @Transactional
-    public DataProductResponse.saleDataProduct saleDataProduct(
-            MultipartFile zipfile,
-            List<MultipartFile> exampleFiles,
-            String title, Long price, String description, List<Long> categoryIds
-    ){
-        // zip파일 유효성 검사 및 파일 갯수 확인(갯수가 이상함)확인 필요
-        Long fileCount = countFilesInZip(zipfile);
-
-        DataProduct dataProduct = DataProduct.builder()
-                .title(title)
-                .buyCnt(0L)
-                .dataSize(fileCount)
-                .price(price)
-                .description(description)
-                .build();
-        dataProductRepository.save(dataProduct);
-
-        for (Long categoryId: categoryIds){
-            Category category = categoryRepository.findById(categoryId).get();
-            ProductCategory product_category = ProductCategory.builder()
-                    .dataProduct(dataProduct)
-                    .category(category)
-                    .build();
-
-            dataProduct.addProductCategory(product_category);
-            category.addProductCategory(product_category);
-        }
-
-        //회원과의 연관관계 설정
-        User user = userService.getCurrentUser();
-        dataProduct.setUser(user);
-
-        List<String> zipInfo = uploadFile(zipfile);
-
-        ZipFile zipFile = ZipFile.builder()
-                .originalFileName(zipInfo.get(0))
-                .uploadFileName(zipInfo.get(1))
-                .uploadUrl(zipInfo.get(2))
-                .sizeGb((double) zipfile.getSize()/(1024*1024*1024)) //gb로
-                .build();
-        dataProduct.setZipFile(zipFile); //연관관계 설정
-        zipFileRepository.save(zipFile);
-
-
-        for (MultipartFile exampleFile : exampleFiles) {
-
-            //이미지 파일인지 유효성 검사
-            try {
-                boolean imageFile = isImageFile(exampleFile);
-            } catch (CustomException | IOException e) {
-                throw new CustomException(Result.INCORRECT_FILE_TYPE_Only_JPG_JPEG_PNG);
-            }
-
-            List<String> exampleImagesInfo = uploadFile(exampleFile);
-
-            ExampleImage exampleImage = ExampleImage.builder()
-                    .originalFileName(exampleImagesInfo.get(0))
-                    .uploadFileName(exampleImagesInfo.get(1))
-                    .imageUrl(exampleImagesInfo.get(2))
-                    .build();
-            exampleImage.setDataProduct(dataProduct);
-            exampleImageRepository.save(exampleImage);
-        }
-
-        //카테고리 설정하자.
-        // 중간 테이블 객체 생성해서, 각각 카테고리, 데이텃ㅇ품 넣어주고, 데이ㅓㅌ 상품쪽에서 프로덕트 카테고리 리스트안에 넣어주면 끝??
-        DataProductResponse.saleDataProduct saleDataProduct = DataProductResponse.saleDataProduct
-                .builder()
-                .id(dataProduct.getId())
-                .build();
-
-        return saleDataProduct;
-    }
-
- */
-
     // 데이터 상품 top3 조회
     @Transactional
     public List<DataProductResponse.findDataProducts> findTop3Download(){
@@ -390,24 +356,6 @@ public class DataProductService {
         }
         return findTop3DataProducts;
     }
-
-
-
-//    // 조건 검색
-//    @Transactional(readOnly = true)
-//    public Page<DataProductResponse.findDataProducts> findDataProductsFiltered(
-//            DataProductRequest.filter request){
-//
-//        Pageable pageable = PageRequest.of(request.getPage(), 10, Sort.by("createdAt").descending());
-//        String title = request.getTitle();
-//        Long maxPrice = request.getMaxPrice();
-//        Long minPrice = request.getMinPrice();
-//        List<Long> categoriesId = request.getCategoriesId();
-//
-//        Page<DataProductResponse.findDataProducts> dataProductsFiltered = dataProductRepository.findDataProductsFiltered(title, maxPrice, minPrice, categoriesId, pageable);
-//
-//        return null;
-//    }
 
     // s3에 업로드
     private List<String> uploadFile(MultipartFile multipartFile) {
@@ -489,6 +437,49 @@ public class DataProductService {
 //            throw new CustomException(Result.FAIL);
 //        }
 //    }
+    // zip 안에 이미지 파일인지 확인하는 방법
+    public void isImageInZip(MultipartFile zipFile) {
+        // 빈 zip인지 확인
+        try {
+            if (zipFile.isEmpty()) {
+                throw new CustomException(Result.NO_IMAGE_FILE);
+            }
+
+            byte[] zipData = zipFile.getBytes();
+
+            containsOnlyImages(zipData);
+
+
+        } catch (IOException e) {
+            throw new CustomException(Result.INCORRECT_FILE_TYPE_Only_JPG_JPEG_PNG);
+        }
+    }
+
+    private boolean containsOnlyImages(byte[] zipData) {
+        try (ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream(zipData))) {
+            ZipEntry entry;
+            while ((entry = zipStream.getNextEntry()) != null) {
+                if (!isImage(entry.getName())) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (IOException e) {
+            throw new CustomException(Result.NO_IMAGE_FILE);
+        }
+    }
+
+    private boolean isImage(String filename) {
+        // 이미지 확장자 리스트
+        String[] imageExtensions = {".jpg", ".jpeg", ".png"};
+
+        for (String ext : imageExtensions) {
+            if (filename.toLowerCase().endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     // zip 안에 이미지 파일 몇개인지 세는 작업
     public Long countFilesInZip(MultipartFile zipFile) {
