@@ -257,20 +257,26 @@ public class UserService {
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
         boolean validate = false;
 
+        // 회원이 주문한 상품중 취소되지 않은 상품 중 요청으로 들어온 데이터 상품과 일치하는 상품이 있는지 대조 검증
         for (Order order : orders) {
-            List<OrderItem> orderItems = order.getOrderItems();
-            for (OrderItem orderItem : orderItems) {
-                if (orderItem.getDataProduct()==dataProduct){
-                    log.info(orderItem.getDataProduct().getTitle());
-                    validate=true;
+            if (order.getStatus()!=OrderStatus.CANCEL){
+                List<OrderItem> orderItems = order.getOrderItems();
+                for (OrderItem orderItem : orderItems) {
+                    if (orderItem.getDataProduct() == dataProduct) {
+                        log.info(orderItem.getDataProduct().getTitle());
+                        validate = true;
+                    }
                 }
             }
         }
 
+        // 있으면, url과 이름을 조회 해서 프론트로 리턴 그리고 다운로드 수 증가
         if (validate == true) {
             ZipFile zipFile = dataProduct.getZipFile();
             String originalFileName = zipFile.getOriginalFileName();
             String downloadUrl = zipFile.getUploadUrl();
+
+            dataProduct.addDownloadCnt();
 
             return ZipFileResponse.downloadZip.builder().originalZipName(originalFileName).s3Url(downloadUrl).build();
         }else{

@@ -141,9 +141,7 @@ public class DataProductService {
         User user = userService.getCurrentUser();
 
         // 결제 로직 구성후 변경(이건 결제 파트에서 해야함. 그래야 해당 메서드를 통해 ORDER->DONE이 됨)
-        Order order = Order.builder()
-                .orderStatus(OrderStatus.ORDER).build();
-        order.setUser(user);
+        // orderitems를 찾아서 연관관계 설정후 setdataproduct, order 찾아서 done으로 바꿀거임
 
         //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전달
         // DataProduct 생성
@@ -157,11 +155,11 @@ public class DataProductService {
         dataProductRepository.save(dataProduct);
 
         // 결제 로직 구성후 변경
-        OrderItem orderItem = OrderItem.builder()
-                .order(order)
-                .dataProduct(dataProduct)
-                .build();
-        orderItem.setOrder(order);
+//        OrderItem orderItem = OrderItem.builder()
+//                .order(order)
+//                .dataProduct(dataProduct)
+//                .build();
+//        orderItem.setOrder(order);
 
 
         // 카테고리 가져오기
