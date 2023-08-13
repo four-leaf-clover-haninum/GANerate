@@ -1,10 +1,6 @@
 package com.example.GANerate.service.user;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.util.IOUtils;
 import com.example.GANerate.config.SecurityUtils;
 import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.config.redis.RedisUtil;
@@ -13,6 +9,7 @@ import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.DataProductRepository;
+import com.example.GANerate.repository.HeartRepository;
 import com.example.GANerate.repository.UserRepository;
 import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.ZipFileResponse;
@@ -21,10 +18,6 @@ import com.example.GANerate.response.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -34,14 +27,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import static com.example.GANerate.enumuration.Result.NOT_FOUND_USER;
-import static com.example.GANerate.enumuration.Result.USERID_NOT_FOUND;
+import static com.example.GANerate.enumuration.Result.INVALID_EMAIL;
 
 @Service
 @Slf4j
@@ -55,9 +47,10 @@ public class UserService {
     private final RedisUtil redisUtil;
     private final DataProductRepository dataProductRepository;
     private final AmazonS3 amazonS3;
+    private final HeartRepository heartRepository;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
+//    @Value("${cloud.aws.s3.bucket}")
+//    private String bucket;
 
 
     //회원가입
@@ -83,7 +76,7 @@ public class UserService {
 
         // 일치하는 userId 없음
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException(USERID_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(INVALID_EMAIL));
 
         // password 틀림
         if(!passwordEncoder.matches(request.getUserPw(), user.getUserPw())){
@@ -137,77 +130,48 @@ public class UserService {
                 .build();
     }
 
-    //전체 유저 조회
-    @Transactional(readOnly = true)
-    public List<UserResponse.userAll> findAll(){
-        List<User> all = userRepository.findAll();
-        List<UserResponse.userAll> userAll = new ArrayList<>();
-
-        for(User user: all){
-            UserResponse.userAll a = UserResponse.userAll.builder()
-                .email(user.getEmail())
-                .name(user.getName())
-                .phoneNum(user.getPhoneNum())
-                .build();
-
-            userAll.add(a);
-        }
-        return userAll;
-
-        /*
-        스트림으로
-        List<User> all = userRepository.findDataProducts();
-
-        return all.stream()
-            .map(user -> UserResponse.userAll.builder()
-                    .email(user.getEmail())
-                    .name(user.getName())
-                    .phoneNum(user.getPhoneNum())
-                    .build())
-            .collect(Collectors.toList());
-         */
-    }
-
     // 좋아요 한 데이터 조회
     @Transactional
-    public List<DataProductResponse.findHeartDataProducts> findHeartDataProducts(){
+    public List<DataProductResponse.findDataProducts> findHeartDataProducts(){
         User user = getCurrentUser();
-        List<Heart> hearts = user.getHearts();
+        List<DataProduct> dataProducts = heartRepository.findDataProductsByUser(user).orElseThrow(() -> new CustomException(Result.NOT_FOUND_HEART));
 
-        List<DataProduct> dataProducts = new ArrayList<>();
-        for(Heart heart: hearts){
-            dataProducts.add(heart.getDataProduct());
-        }
+        List<DataProductResponse.findDataProducts> response = new ArrayList<>();
 
-        List<DataProductResponse.findHeartDataProducts> response = new ArrayList<>();
-
+        // 공통 포맷 만들기
         for(DataProduct dataProduct:dataProducts){
             ExampleImage exampleImage = dataProduct.getExampleImages().get(0);
             String imageUrl = exampleImage.getImageUrl();
 
             List<ProductCategory> productCategories = dataProduct.getProductCategories();
             List<String> categoryTitles = new ArrayList<>();
+            List<Long> categoryIds = new ArrayList<>();
             for(ProductCategory productCategory : productCategories){
-                String categoryTitle = productCategory.getCategory().getTitle();
+                Category category = productCategory.getCategory();
+                String categoryTitle = category.getTitle();
+                Long categoryId = category.getId();
                 categoryTitles.add(categoryTitle);
+                categoryIds.add(categoryId);
             }
 
-            DataProductResponse.findHeartDataProducts findHeartDataProducts = DataProductResponse.findHeartDataProducts
+            DataProductResponse.findDataProducts findHeartDataProducts = DataProductResponse.findDataProducts
                     .builder()
-                    .productId(dataProduct.getId())
+                    .dataProductId(dataProduct.getId())
+                    .buyCnt(dataProduct.getBuyCnt())
                     .title(dataProduct.getTitle())
                     .price(dataProduct.getPrice())
                     .description(dataProduct.getDescription())
                     .createdAt(dataProduct.getCreatedAt())
                     .imageUrl(imageUrl)
-                    .categoriesName(categoryTitles)
+                    .categoryIds(categoryIds)
+                    .categoryNames(categoryTitles)
                     .build();
             response.add(findHeartDataProducts);
         }
         return response;
     }
 
-    // 구매한 상품 조회(다운로드 가능)
+    // 주품한 상품 조회(다운로드 가능)
     @Transactional(readOnly = true)
     public List<DataProductResponse.orderDataProducts> findOrderDataProduct(){
         User user = getCurrentUser();
@@ -215,9 +179,6 @@ public class UserService {
 
         List<DataProductResponse.orderDataProducts> orderDone = new ArrayList<>(); //다운로드 가능하거나 아직 다운은 못하지만 구매한 상품을 조회(취소 상품은 x)
         for (Order order : orders) {
-            if (order.getStatus() == OrderStatus.CANCEL){
-                throw new CustomException(Result.FAIL);
-            }
             List<OrderItem> orderItems = order.getOrderItems();
             for (OrderItem orderItem : orderItems) {
                 DataProduct dataProduct = orderItem.getDataProduct();
@@ -249,7 +210,7 @@ public class UserService {
         return orderDone;
     }
 
-    // 구매한 상춤중 다운로드 가능한 상품 다운로드
+    // 구매한 상품중 다운로드 가능한 상품 다운로드
     @Transactional
     public ZipFileResponse.downloadZip downloadDataProduct(Long dataProductId) throws IOException {
         User user = getCurrentUser();
@@ -287,7 +248,7 @@ public class UserService {
     private void validateDuplicatedUserEmail(String userEmail) {
         Boolean existsByNickName = userRepository.existsByEmail(userEmail);
         if (existsByNickName) {
-            throw new CustomException(Result.USERID_DUPLICATED);
+            throw new CustomException(Result.USER_EMAIL_DUPLICATED);
         }
     }
 

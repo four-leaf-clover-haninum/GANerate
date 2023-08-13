@@ -13,15 +13,15 @@ public class DataProductResponse {
     @AllArgsConstructor
     @Builder
     public static class findDataProducts {
-        private Long id;
+        private Long dataProductId;
         private Long buyCnt;
         private String title;
         private Long price;
         private String description;
         private String imageUrl;
         private LocalDateTime createdAt;
-        private List<Long> categoryId;
-        private List<String> categoriesName;
+        private List<Long> categoryIds;
+        private List<String> categoryNames;
     }
 
     @Getter
@@ -82,20 +82,20 @@ public class DataProductResponse {
         private String imageUrl;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class findHeartDataProducts {
-        private Long productId;
-//        private Long buyCnt;
-        private String title;
-        private Long price;
-        private String description;
-        private String imageUrl;
-        private LocalDateTime createdAt;
-        private List<String> categoriesName;
-    }
+//    @Data
+//    @NoArgsConstructor
+//    @AllArgsConstructor
+//    @Builder
+//    public static class findHeartDataProducts {
+//        private Long dataProductId;
+////        private Long buyCnt;
+//        private String title;
+//        private Long price;
+//        private String description;
+//        private String imageUrl;
+//        private LocalDateTime createdAt;
+//        private List<String> categoriesName;
+//    }
     @Getter
     @Builder
     @AllArgsConstructor
