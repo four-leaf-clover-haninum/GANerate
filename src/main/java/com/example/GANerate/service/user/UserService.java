@@ -49,10 +49,6 @@ public class UserService {
     private final AmazonS3 amazonS3;
     private final HeartRepository heartRepository;
 
-//    @Value("${cloud.aws.s3.bucket}")
-//    private String bucket;
-
-
     //회원가입
     @Transactional
     public UserResponse.signup signup(UserRequest.signup request){
