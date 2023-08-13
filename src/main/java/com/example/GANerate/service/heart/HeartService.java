@@ -32,7 +32,6 @@ public class HeartService {
     @Transactional
     public HeartResponse like(Long dataProductId) {
         User user = userService.getCurrentUser();
-//        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_USER)); 파라미터로 받은 userId. 이경우 restdocs에서 data null
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
         //이미 좋아요 했으면
