@@ -1,0 +1,10 @@
+[[Order-API]]
+== Order API
+
+[[결제전-주문-확인]]
+=== Order 결제전 주문 확인
+operation::order-controller-test/product-order[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[결제-완료후-주문-생성]]
+=== Order 결제 후 주문 생성
+operation::order-controller-test/create-order[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

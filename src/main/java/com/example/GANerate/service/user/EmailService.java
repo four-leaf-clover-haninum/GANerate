@@ -41,16 +41,16 @@ public class EmailService {
         String subject = "제목";
         String text = "회원 가입을 위한 인증번호는 " + authKey + "입니다. <br/>";
 
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "utf-8");
             helper.setTo(email);
             helper.setSubject(subject);
             helper.setText(text, true);//포함된 텍스트가 HTML이라는 의미로 true.
-            javaMailSender.send(mimeMessage);
         } catch (MessagingException e) {
             throw new CustomException(Result.FAIL_SEND_EMAIL);
         }
+        javaMailSender.send(mimeMessage);
 
         // 유효 시간(5분)동안 {email, authKey} 저장
         redisUtil.setDataExpire(authKey, email, 60 * 5L);

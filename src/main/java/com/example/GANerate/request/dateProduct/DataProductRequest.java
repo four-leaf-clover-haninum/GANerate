@@ -17,6 +17,7 @@ public class DataProductRequest {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class createProduct{
+        private Long orderId;
         private String title;
         private String description;
 //        private String imageUrl;
@@ -56,5 +57,4 @@ public class DataProductRequest {
         @NotNull
         private List<String> imageUrls;
     }
-
 }

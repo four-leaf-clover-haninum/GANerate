@@ -66,8 +66,6 @@ public class TokenProvider {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
-        log.info(authorities);
-
         long now = (new Date()).getTime();
         Date validity = new Date(now + this.accessTokenValidTime);
 
@@ -85,8 +83,6 @@ public class TokenProvider {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-
-        log.info(authorities);
 
         long now = (new Date()).getTime();
         Date validity = new Date(now + this.refreshTokenValidTime);

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,16 +22,8 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryResponse.findCategories> findCategories(){
         List<Category> categories = categoryRepository.findAll();
-        List<CategoryResponse.findCategories> categoryLists = new ArrayList<>();
 
-        for (Category category : categories) {
-            CategoryResponse.findCategories dto = CategoryResponse.findCategories.builder()
-                    .categoryId(category.getId())
-                    .categoryCode(category.getCategoryCode())
-                    .title(category.getTitle())
-                    .build();
-            categoryLists.add(dto);
-        }
-        return categoryLists;
+        return categories.stream()
+                .map(category -> new CategoryResponse.findCategories(category.getId(), category.getCategoryCode(), category.getTitle())).collect(Collectors.toList());
     }
 }

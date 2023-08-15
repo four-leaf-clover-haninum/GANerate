@@ -39,6 +39,11 @@ public class Order extends BaseEntity{
         user.getOrders().add(this);
     }
 
+    //zip 생성되면 상태 Done으로 변경
+    public void setStatus(OrderStatus orderStatus){
+        this.status=orderStatus;
+    }
+
     @Builder
     public Order(Long id, OrderStatus orderStatus){
         this.id = id;

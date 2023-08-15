@@ -13,8 +13,8 @@ public enum Result {
     NOT_USES_TOKEN(-2, "유효한 토큰이 존재하지 않습니다."),
 
     //유저
-    USERID_DUPLICATED(2200, "중복되는 아이디"),
-    USERID_NOT_FOUND(2201, "존재하지 않는 아이디"),
+    USER_EMAIL_DUPLICATED(2200, "중복되는 이메일"),
+    INVALID_EMAIL(2201, "올바르지 않은 이메일"),
     INVALID_PASSWORD(2202, "올바르지 않은 비밀번호"),
     NOT_FOUND_USER(2203, "존재하지 않는 회원"),
     UNAUTHORITY_TOKEN(2204, "권한 정보가 없는 토큰"),
@@ -34,13 +34,21 @@ public enum Result {
 
     //좋아요
     DUPLICATED_HEART(5001, "좋아요 중복"),
+    NOT_FOUND_HEART(5002, "좋아요한 상품을 찾을 수 없음"),
 
     //카테고리
     NON_EXIST_CATEGORY(6001, "존재하지 않는 카테고리"),
 
     //ORDER
     NOT_BUY_PRODUCT(7001, "구매하지 않은 데이터 상품"),
-    FAIL_CREATE_DATA(7002, "데이터 생성 실패");
+    FAIL_CREATE_DATA(7002, "데이터 생성 실패"),
+    NOT_FOUND_ORDER(7003, "주문을 찾지 못함"),
+
+    //결제
+    NOT_FOUND_PAYMENT_INFO(8001, "결제정보를 찾지 못함."),
+    UN_CORRECT_PRICE(8002, "결제정보와 결제 가격이 일치하지 않음.")
+    ;
+
 
 
 
