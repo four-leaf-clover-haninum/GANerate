@@ -29,16 +29,18 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
 
     @Transactional(readOnly = true)
-    public OrderResponse.ProductBuyOrder productBuyOrder(Long dataProductId){
+    public OrderResponse.ProductBuyOrder productOrder(Long dataProductId){
         User user = userService.getCurrentUser();
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
         ZipFile zipFile = dataProduct.getZipFile();
 
-        List<String> categoryNameS = new ArrayList<>();
+        List<String> categoryNames = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
         List<ProductCategory> productCategories = dataProduct.getProductCategories();
         for (ProductCategory productCategory : productCategories) {
             Category category = productCategory.getCategory();
-            categoryNameS.add(category.getTitle());
+            categoryNames.add(category.getTitle());
+            categoryIds.add(category.getId());
         }
 
         return OrderResponse.ProductBuyOrder.builder()
@@ -48,7 +50,8 @@ public class OrderService {
                 .dataProductId(dataProduct.getId())
                 .dataProductTitle(dataProduct.getTitle())
                 .dataProductPrice(dataProduct.getPrice())
-                .categoryName(categoryNameS)
+                .categoryNames(categoryNames)
+                .categoryIds(categoryIds)
                 .zipFileOriginalFileName(zipFile.getOriginalFileName())
                 .zipFileSizeGb(zipFile.getSizeGb())
                 .dataProductSize(dataProduct.getDataSize())
