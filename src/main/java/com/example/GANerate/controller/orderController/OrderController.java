@@ -21,12 +21,12 @@ public class OrderController {
     // 주문 확인창
     @GetMapping("/v1/orders/{data-product-id}")
     public CustomResponseEntity<OrderResponse.ProductBuyOrder> productOrder(@PathVariable("data-product-id") Long dataProductId){
-        return CustomResponseEntity.success(orderService.productBuyOrder(dataProductId));
+        return CustomResponseEntity.success(orderService.productOrder(dataProductId));
     }
 
     // 데이터 결제완료시 주문을 생성함
-    @PostMapping("/v1/orders/{data-product-id}")
-    public CustomResponseEntity<OrderResponse.CreateOrder> createOrder(@PathVariable("data-product-id") Long dataProductId){
-        return CustomResponseEntity.success(orderService.createOrder(dataProductId));
-    }
+//    @PostMapping("/v1/orders/{data-product-id}")
+//    public CustomResponseEntity<OrderResponse.CreateOrder> createOrder(@PathVariable("data-product-id") Long dataProductId){
+//        return CustomResponseEntity.success(orderService.createOrder(dataProductId));
+//    }
 }

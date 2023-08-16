@@ -46,7 +46,7 @@ public class UserController {
     }
 
     //이메일 인증번호 인증
-    @GetMapping("/v1/users/email")
+    @PostMapping("/v1/users/email/verify")
     public CustomResponseEntity<UserResponse.email> checkEmailNum(@RequestBody @Valid final UserRequest.emailNum request) {
         return CustomResponseEntity.success(emailService.checkNum(request));
     }
@@ -63,46 +63,35 @@ public class UserController {
         return CustomResponseEntity.success(userService.logout(request));
     }
 
-    //좋아요한 데이터 상품 목록
+    //좋아요 한 데이터 상품 목록
     @GetMapping("/v1/users/hearts")
-    public CustomResponseEntity<List<DataProductResponse.findHeartDataProducts>> findHeartDataProducts(){
+    public CustomResponseEntity<List<DataProductResponse.findDataProducts>> findHeartDataProducts(){
         return CustomResponseEntity.success(userService.findHeartDataProducts());
     }
 
-
-//    //유저 전체 정보 조회
-//    @GetMapping("/v1/users")
-//    public CustomResponseEntity<List<UserResponse.userAll>> findUsers(){
-//        return CustomResponseEntity.success(userService.findAll());
-//    }
-
-    //유저 단건 조회
+    //유저 단건 조회 - 테스트
     @GetMapping("/v1/users/")
     public CustomResponseEntity<UserResponse.user> findUser(@AuthenticationPrincipal Long id){
         return CustomResponseEntity.success(userService.findOne(id));
     }
 
-    //프로필 수정
-//    @PostMapping("/v1/users/profile")
-//    public CustomResponseEntity<UserResponse>
-
-
-    //좋아요 상품 조회
-
-
-    //구매 상품 조회
+    //주문 내역 조회
     @GetMapping("/v1/users/orders")
     public CustomResponseEntity<List<DataProductResponse.orderDataProducts>> findOrderDataProduct(){
         return CustomResponseEntity.success(userService.findOrderDataProduct());
     }
 
-    // 구매한 데이터 상품 다운로드
+    // 주문한 데이터 상품중 구매 완료된 상품 다운로드
     @PostMapping("/v1/users/data-products/{data-product-id}")
     public CustomResponseEntity<ZipFileResponse.downloadZip> downloadDataProduct(@PathVariable("data-product-id") Long dataProductId) throws IOException {
         return CustomResponseEntity.success(userService.downloadDataProduct(dataProductId));
     }
 
-    //판매 업로드 상품 조회 - 이후에 수정 및 삭제
+    //회원이 판매하는 상품 조회
+    @GetMapping("/v1/users/data-products")
+    public CustomResponseEntity<List<DataProductResponse.findDataProducts>> findSaleDataProduct(){
+        return CustomResponseEntity.success(userService.findSaleDataProducts());
+    }
 
 
 

@@ -40,7 +40,7 @@ public class DataProductController {
         return CustomResponseEntity.success(dataProductService.findCategoryDataProducts(pageable, categoryId));
     }
 
-    // 메인페이지(다운로드 상위 3개 상품 조회)(카테고리, 이름, 생성일, 가격, 데이터 수량?)
+    // 메인페이지(구매수 상위 3개 상품 조회)(카테고리, 이름, 생성일, 가격, 데이터 수량?)
     @GetMapping("/v1/data-products/top3")
     public CustomResponseEntity<List<DataProductResponse.findDataProducts>> findTop3Download(){
         return CustomResponseEntity.success(dataProductService.findTop3Download());
@@ -50,21 +50,21 @@ public class DataProductController {
     // 데이터 상품 생성(GANerate 이용) 결제후 요청해야함.
     @PostMapping("/v1/data-products")
     public CustomResponseEntity<DataProductResponse.createDataProduct> createDataProduct(
-            @RequestPart final DataProductRequest.createProduct request, @RequestPart MultipartFile zipFile) throws IOException {
+            @RequestPart @Valid final DataProductRequest.createProduct request, @RequestPart MultipartFile zipFile) throws Exception {
         return CustomResponseEntity.success(dataProductService.createDataProduct(request, zipFile));
     }
 
     // 데이터 상품 판매(zip)
     @PostMapping("/v1/data-products/sale/zip")
     public CustomResponseEntity<DataProductResponse.saleDataProductZip> saleDataProductsZip(
-            @RequestPart MultipartFile zipFile) {
+            @RequestPart MultipartFile zipFile) throws Exception {
         return CustomResponseEntity.success(dataProductService.saleDataProductZip(zipFile));
     }
 
     // 데이터 상품 판매(예시 이미지)
     @PostMapping("/v1/data-products/sale/image")
     public CustomResponseEntity<List<DataProductResponse.saleDataProductImages>> saleDataProductsImages(
-            @RequestPart List<MultipartFile> exampleImages) {
+            @RequestPart List<MultipartFile> exampleImages) throws IOException {
         return CustomResponseEntity.success(dataProductService.saleDataProductImages(exampleImages));
     }
 
@@ -81,9 +81,9 @@ public class DataProductController {
         return CustomResponseEntity.success(dataProductService.findDataProduct(dataProductId));
     }
 
-    // 카테고리, 가격, 상품명 조건 받아서 검색
+    // 카테고리, 가격, 상품명 조건 받아서 검색 (데이터 상품 조건 검색)
     @GetMapping("/v1/data-products/filter")
-    public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProductsFiltered(@RequestBody DataProductRequest.filter request){
+    public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProductsFiltered(@RequestBody @Valid DataProductRequest.filter request){
         return CustomResponseEntity.success(dataProductSearchService.findDataProductsFiltered(request));
     }
 }
