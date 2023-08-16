@@ -22,7 +22,8 @@ public class OrderResponse {
         private Long dataProductId;
         private String dataProductTitle;
         private Long dataProductPrice;
-        private List<String> categoryName;
+        private List<String> categoryNames;
+        private List<Long> categoryIds;
         private String zipFileOriginalFileName;
         private double zipFileSizeGb;
         private Long dataProductSize;

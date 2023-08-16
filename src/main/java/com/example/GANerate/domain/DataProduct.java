@@ -24,12 +24,9 @@ public class DataProduct extends BaseEntity{
     @NotNull
     private Long buyCnt;
 
-    //원하는 데이터 수량(이미지가 몇개들어있는지)
+    //원하는 데이터 수량혹은 데이터 개수
     @NotNull
     private Long dataSize;
-
-//    @NotNull
-//    private String ThumbnailImage;
 
     @NotNull
     private String title;
@@ -45,8 +42,6 @@ public class DataProduct extends BaseEntity{
 
     @OneToMany(mappedBy = "dataProduct", cascade = CascadeType.ALL)
     private List<ExampleImage> exampleImages = new ArrayList<>();
-
-
 
     @OneToOne
     @JoinColumn(name = "zipfile_id")
@@ -79,7 +74,7 @@ public class DataProduct extends BaseEntity{
     }
     public void setUser(User user){
         this.user = user;
-        user.getDataProducts().add(this);
+//        user.getDataProducts().add(this);
     }
 
     public void addProductCategory(ProductCategory productCategory){

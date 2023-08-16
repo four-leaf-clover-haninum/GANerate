@@ -15,6 +15,7 @@ import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.response.user.UserResponse;
+import com.example.GANerate.service.dataProduct.DataProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.example.GANerate.enumuration.Result.NOT_FOUND_USER;
 import static com.example.GANerate.enumuration.Result.INVALID_EMAIL;
@@ -126,45 +128,24 @@ public class UserService {
                 .build();
     }
 
+    // 회원이 판매하려고 올린 데이터 상품 조회
+    @Transactional(readOnly = true)
+    public List<DataProductResponse.findDataProducts> findSaleDataProducts(){
+        User user = getCurrentUser();
+        List<DataProduct> dataProducts = dataProductRepository.findByUser(user);
+        return dataProducts.stream()
+                .map(this::convertToFindDataProductsResponse)
+                .collect(Collectors.toList());
+    }
+
     // 좋아요 한 데이터 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public List<DataProductResponse.findDataProducts> findHeartDataProducts(){
         User user = getCurrentUser();
         List<DataProduct> dataProducts = heartRepository.findDataProductsByUser(user).orElseThrow(() -> new CustomException(Result.NOT_FOUND_HEART));
-
-        List<DataProductResponse.findDataProducts> response = new ArrayList<>();
-
-        // 공통 포맷 만들기
-        for(DataProduct dataProduct:dataProducts){
-            ExampleImage exampleImage = dataProduct.getExampleImages().get(0);
-            String imageUrl = exampleImage.getImageUrl();
-
-            List<ProductCategory> productCategories = dataProduct.getProductCategories();
-            List<String> categoryTitles = new ArrayList<>();
-            List<Long> categoryIds = new ArrayList<>();
-            for(ProductCategory productCategory : productCategories){
-                Category category = productCategory.getCategory();
-                String categoryTitle = category.getTitle();
-                Long categoryId = category.getId();
-                categoryTitles.add(categoryTitle);
-                categoryIds.add(categoryId);
-            }
-
-            DataProductResponse.findDataProducts findHeartDataProducts = DataProductResponse.findDataProducts
-                    .builder()
-                    .dataProductId(dataProduct.getId())
-                    .buyCnt(dataProduct.getBuyCnt())
-                    .title(dataProduct.getTitle())
-                    .price(dataProduct.getPrice())
-                    .description(dataProduct.getDescription())
-                    .createdAt(dataProduct.getCreatedAt())
-                    .imageUrl(imageUrl)
-                    .categoryIds(categoryIds)
-                    .categoryNames(categoryTitles)
-                    .build();
-            response.add(findHeartDataProducts);
-        }
-        return response;
+        return dataProducts.stream()
+                .map(this::convertToFindDataProductsResponse)
+                .collect(Collectors.toList());
     }
 
     // 주품한 상품 조회(다운로드 가능)
@@ -267,6 +248,33 @@ public class UserService {
                 .phoneNum(request.getPhoneNum())
                 .authorities(getAuthorities())
                 .build();
+    }
+
+    public DataProductResponse.findDataProducts convertToFindDataProductsResponse(DataProduct dataProduct) {
+        List<String> categoryNames = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+        extractCategoryDetails(dataProduct.getProductCategories(), categoryNames, categoryIds);
+
+        return DataProductResponse.findDataProducts.builder()
+                .dataProductId(dataProduct.getId())
+                .buyCnt(dataProduct.getBuyCnt())
+                .title(dataProduct.getTitle())
+                .price(dataProduct.getPrice())
+                .description(dataProduct.getDescription())
+                .imageUrl(dataProduct.getExampleImages().get(0).getImageUrl()) // Thumbnail image
+                .createdAt(dataProduct.getCreatedAt())
+                .categoryNames(categoryNames)
+                .categoryIds(categoryIds)
+                .build();
+    }
+
+    // DataProduct에 연관된 카테고리 정보 추출
+    private void extractCategoryDetails(List<ProductCategory> productCategories, List<String> categoryNames, List<Long> categoryIds) {
+        for (ProductCategory productCategory : productCategories) {
+            Category category = productCategory.getCategory();
+            categoryNames.add(category.getTitle());
+            categoryIds.add(category.getId());
+        }
     }
 
     private static Set<Authority> getAuthorities() {

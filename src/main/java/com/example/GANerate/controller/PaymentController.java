@@ -17,18 +17,12 @@ import java.util.Map;
 @Slf4j
 public class PaymentController {
     //토큰 발급을 위해 아임포트에서 제공해주는 rest api 사용.(gradle로 의존성 추가)
-    private final IamportClient iamportClientApi;
-
-    @Value("${pgmodule.app-id}")
-    private String apiKey;
-    @Value("${pgmodule.secret-key}")
-    private String apiSecret;
-
+    private final IamportClient iamportClient;
 
     //생성자로 rest api key와 secret을 입력해서 토큰 바로생성.
-    public PaymentController() {
-        this.iamportClientApi = new IamportClient("apiKey",
-                "apiSecret");
+    public PaymentController(@Value("${pgmodule.app-id}") String apiKey,
+                             @Value("${pgmodule.secret-key}") String apiSecret) {
+        this.iamportClient = new IamportClient(apiKey, apiSecret);
     }
 
     @Autowired
@@ -43,7 +37,7 @@ public class PaymentController {
      * @throws IOException
      */
     public IamportResponse<com.siot.IamportRestClient.response.Payment> paymentLookup(String impUid) throws IamportResponseException, IOException{
-        return iamportClientApi.paymentByImpUid(impUid);
+        return iamportClient.paymentByImpUid(impUid);
     }
 
     /**
@@ -56,7 +50,7 @@ public class PaymentController {
      */
     public IamportResponse<com.siot.IamportRestClient.response.Payment> paymentLookup(Long paymentId) throws IamportResponseException, IOException{
         Payment payment = paymentService.paymentLookupService(paymentId);
-        return iamportClientApi.paymentByImpUid(payment.getImpUid());
+        return iamportClient.paymentByImpUid(payment.getImpUid());
     }
 
     /**
@@ -76,6 +70,7 @@ public class PaymentController {
         Integer amount = Integer.parseInt(map.get("amount"));//실제로 유저가 결제한 금액
 
         log.info("==========");
+        log.info(impUid);
 
         //아임포트 서버쪽에 결제된 정보 조회.
         //paymentByImpUid 는 아임포트에 제공해주는 api인 결제내역 조회(/payments/{imp_uid})의 역할을 함.

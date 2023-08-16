@@ -34,7 +34,6 @@ public class Heart extends BaseEntity{
 
     public void setUser(User user){
         this.user = user;
-        user.getHearts().add(this);
     }
 
 }

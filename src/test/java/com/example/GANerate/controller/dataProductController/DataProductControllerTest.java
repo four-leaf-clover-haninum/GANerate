@@ -66,9 +66,9 @@ class DataProductControllerTest extends RestDocsTestSupport {
 
         // given
         List<DataProductResponse.findDataProducts> content = new ArrayList<>();
-        content.add(new DataProductResponse.findDataProducts(2L, 2L, "음식 이미지 셋", 6000L, "음식이미지를 모은 자료입니다.", "test.url", LocalDateTime.of(2023, 7, 19, 12, 0, 0), null, Arrays.asList("패션")));
-        content.add(new DataProductResponse.findDataProducts(1L, 0L, "얼굴 이미지 셋", 5000L, "사람의 얼굴이미지를 모은 자료입니다.", "test.url", LocalDateTime.of(2023, 7, 19, 10, 0, 0), null, Arrays.asList("패션", "건물/랜드마크")));
-        content.add(new DataProductResponse.findDataProducts(3L, 100L, "동물 이미지 셋", 5000L, "동물이미지를 모은 자료입니다.", "test.url", LocalDateTime.of(2023, 7, 19, 9, 0, 0), null, new ArrayList<>()));
+        content.add(new DataProductResponse.findDataProducts(2L, 2L, "음식 이미지 셋", 6000L, "음식이미지를 모은 자료입니다.", "test.url", LocalDateTime.of(2023, 7, 19, 12, 0, 0), List.of(1L,2L), Arrays.asList("패션")));
+        content.add(new DataProductResponse.findDataProducts(1L, 0L, "얼굴 이미지 셋", 5000L, "사람의 얼굴이미지를 모은 자료입니다.", "test.url", LocalDateTime.of(2023, 7, 19, 10, 0, 0), List.of(4L,6L), Arrays.asList("패션", "건물/랜드마크")));
+        content.add(new DataProductResponse.findDataProducts(3L, 100L, "동물 이미지 셋", 5000L, "동물이미지를 모은 자료입니다.", "test.url", LocalDateTime.of(2023, 7, 19, 9, 0, 0), List.of(2L), new ArrayList<>()));
 
         // Create Pageable
         Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
@@ -100,15 +100,15 @@ class DataProductControllerTest extends RestDocsTestSupport {
                                         fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
 
-                                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data.content[].dataProductId").type(JsonFieldType.NUMBER).description("데이터 상품 키값"),
                                         fieldWithPath("data.content[].buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
                                         fieldWithPath("data.content[].title").type(JsonFieldType.STRING).description("상품명"),
                                         fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER).description("가격"),
                                         fieldWithPath("data.content[].description").type(JsonFieldType.STRING).description("설명"),
                                         fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
                                         fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
-                                        fieldWithPath("data.content[].categoryId").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
-                                        fieldWithPath("data.content[].categoriesName").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
+                                        fieldWithPath("data.content[].categoryIds").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data.content[].categoryNames").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
 
                                         fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
                                         fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN).description("정렬되지 않은 경우 여부"),
@@ -299,34 +299,34 @@ class DataProductControllerTest extends RestDocsTestSupport {
         categoriesName.add("의료");
 
         DataProductResponse.findDataProducts dto1 = DataProductResponse.findDataProducts.builder()
-                .id(1L)
+                .dataProductId(1L)
                 .title("test1")
                 .price(1000L)
                 .createdAt(LocalDateTime.now())
-                .categoryId(List.of(1L))
-                .categoriesName(List.of("패션"))
+                .categoryIds(List.of(1L))
+                .categoryNames(List.of("패션"))
                 .buyCnt(2L)
                 .description("testing1")
                 .imageUrl("http://test1.com").build();
 
         DataProductResponse.findDataProducts dto2 = DataProductResponse.findDataProducts.builder()
-                .id(2L)
+                .dataProductId(2L)
                 .title("test2")
                 .price(1200L)
                 .createdAt(LocalDateTime.now())
-                .categoryId(List.of(2L))
-                .categoriesName(List.of("의료"))
+                .categoryIds(List.of(2L))
+                .categoryNames(List.of("의료"))
                 .buyCnt(21L)
                 .description("testing2")
                 .imageUrl("http://test2.com").build();
 
         DataProductResponse.findDataProducts dto3 = DataProductResponse.findDataProducts.builder()
-                .id(3L)
+                .dataProductId(3L)
                 .title("test3")
                 .price(3200L)
                 .createdAt(LocalDateTime.now())
-                .categoryId(List.of(2L))
-                .categoriesName(List.of("의료"))
+                .categoryIds(List.of(2L))
+                .categoryNames(List.of("의료"))
                 .buyCnt(211L)
                 .description("testing3")
                 .imageUrl("http://test3.com").build();
@@ -363,15 +363,15 @@ class DataProductControllerTest extends RestDocsTestSupport {
                                         fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
 
-                                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data.content[].dataProductId").type(JsonFieldType.NUMBER).description("키값"),
                                         fieldWithPath("data.content[].buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
                                         fieldWithPath("data.content[].title").type(JsonFieldType.STRING).description("상품명"),
                                         fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER).description("가격"),
                                         fieldWithPath("data.content[].description").type(JsonFieldType.STRING).description("설명"),
                                         fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
                                         fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
-                                        fieldWithPath("data.content[].categoryId").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
-                                        fieldWithPath("data.content[].categoriesName").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
+                                        fieldWithPath("data.content[].categoryIds").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data.content[].categoryNames").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
 
                                         fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
                                         fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN).description("정렬되지 않은 경우 여부"),
@@ -411,34 +411,34 @@ class DataProductControllerTest extends RestDocsTestSupport {
         categoriesName.add("의료");
 
         DataProductResponse.findDataProducts dto1 = DataProductResponse.findDataProducts.builder()
-                .id(1L)
+                .dataProductId(1L)
                 .title("test1")
                 .price(1000L)
                 .createdAt(LocalDateTime.now())
-                .categoryId(List.of(1L))
-                .categoriesName(List.of("패션"))
+                .categoryIds(List.of(1L))
+                .categoryNames(List.of("패션"))
                 .buyCnt(2L)
                 .description("testing1")
                 .imageUrl("http://test1.com").build();
 
         DataProductResponse.findDataProducts dto2 = DataProductResponse.findDataProducts.builder()
-                .id(2L)
+                .dataProductId(2L)
                 .title("test2")
                 .price(1200L)
                 .createdAt(LocalDateTime.now())
-                .categoryId(List.of(2L))
-                .categoriesName(List.of("의료"))
+                .categoryIds(List.of(2L))
+                .categoryNames(List.of("의료"))
                 .buyCnt(21L)
                 .description("testing2")
                 .imageUrl("http://test2.com").build();
 
         DataProductResponse.findDataProducts dto3 = DataProductResponse.findDataProducts.builder()
-                .id(3L)
+                .dataProductId(3L)
                 .title("test3")
                 .price(3200L)
                 .createdAt(LocalDateTime.now())
-                .categoryId(List.of(2L))
-                .categoriesName(List.of("의료"))
+                .categoryIds(List.of(2L))
+                .categoryNames(List.of("의료"))
                 .buyCnt(211L)
                 .description("testing3")
                 .imageUrl("http://test3.com").build();
@@ -462,15 +462,15 @@ class DataProductControllerTest extends RestDocsTestSupport {
                                 responseFields(
                                         fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
-                                        fieldWithPath("data[].id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data[].dataProductId").type(JsonFieldType.NUMBER).description("키값"),
                                         fieldWithPath("data[].buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
                                         fieldWithPath("data[].title").type(JsonFieldType.STRING).description("상품명"),
                                         fieldWithPath("data[].price").type(JsonFieldType.NUMBER).description("가격"),
                                         fieldWithPath("data[].description").type(JsonFieldType.STRING).description("설명"),
                                         fieldWithPath("data[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
                                         fieldWithPath("data[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
-                                        fieldWithPath("data[].categoryId").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
-                                        fieldWithPath("data[].categoriesName").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들")
+                                        fieldWithPath("data[].categoryIds").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data[].categoryNames").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들")
                                         )
 
                         )
@@ -495,11 +495,12 @@ class DataProductControllerTest extends RestDocsTestSupport {
         List<String> imageUrl = List.of("http://test1.com","http://test2.com");
 
         DataProductResponse.findDataProduct response = DataProductResponse.findDataProduct.builder()
-                .id(1L)
+                .dataProductId(1L)
                 .dataSize(10L)
                 .buyCnt(240L)
                 .title("test 상품")
-                .categoriseName(categoriesName)
+                .categoryNames(categoriesName)
+                .categoryIds(categoryId)
                 .createdAt(LocalDateTime.now())
                 .description("테스트 상품 설명")
                 .zipfileName("테스트.zip")
@@ -528,17 +529,124 @@ class DataProductControllerTest extends RestDocsTestSupport {
                                 responseFields(
                                         fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
-                                        fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("키값"),
+                                        fieldWithPath("data.dataProductId").type(JsonFieldType.NUMBER).description("키값"),
                                         fieldWithPath("data.dataSize").type(JsonFieldType.NUMBER).description("zip 내부 파일 수량"),
                                         fieldWithPath("data.buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
                                         fieldWithPath("data.title").type(JsonFieldType.STRING).description("상품명"),
                                         fieldWithPath("data.price").type(JsonFieldType.NUMBER).description("가격"),
                                         fieldWithPath("data.description").type(JsonFieldType.STRING).description("설명"),
                                         fieldWithPath("data.imageUrl[]").type(JsonFieldType.ARRAY).description("데이터 상품 이미지 URL"),
-                                        fieldWithPath("data.categoriseName[]").type(JsonFieldType.ARRAY).description("데이터 상품 카테고리 이름"),
+                                        fieldWithPath("data.categoryNames[]").type(JsonFieldType.ARRAY).description("데이터 상품 카테고리 이름"),
+                                        fieldWithPath("data.categoryIds[]").type(JsonFieldType.ARRAY).description("데이터 상품 카테고리 키값"),
                                         fieldWithPath("data.zipfileName").type(JsonFieldType.STRING).optional().description("zip파일 이름"),
                                         fieldWithPath("data.zipfileSize").type(JsonFieldType.NUMBER).description("zip 파일 크기(GB)"),
                                         fieldWithPath("data.createdAt").type(JsonFieldType.STRING).description("데이터 상품 생성일시")
+                                )
+                        )
+                )
+        ;
+    }
+
+//    @Test
+//    @DisplayName("GANerate를 이용하여 데이터 상품 생성 요청")
+//
+//
+    @Test
+    @DisplayName("데이터 상품 조건 검색")
+    public void findDataProductsFiltered()throws Exception{
+        // given
+        DataProductRequest.filter request = DataProductRequest.filter.builder()
+                .page(0)
+                .title("test")
+                .categoriesId(List.of(1L))
+                .maxPrice(10000L)
+                .minPrice(100L)
+                .build();
+
+        DataProductResponse.findDataProducts response1 = DataProductResponse.findDataProducts.builder()
+                .dataProductId(1L)// 데이터 상품 id
+                .price(1000L)
+                .title("test1")
+                .buyCnt(12L)
+                .categoryNames(List.of("패션","의료"))
+                .categoryIds(List.of(1L,2L))
+                .imageUrl("testimage")
+                .description("test1 상품입니다.")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        DataProductResponse.findDataProducts response2 = DataProductResponse.findDataProducts.builder()
+                .dataProductId(2L)// 데이터 상품 id
+                .price(2000L)
+                .title("test1")
+                .buyCnt(3L)
+                .categoryNames(List.of("패션"))
+                .categoryIds(List.of(1L))
+                .imageUrl("testimage")
+                .description("test2 상품입니다.")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        List<DataProductResponse.findDataProducts> content = List.of(response1, response2);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+
+        Page<DataProductResponse.findDataProducts> pageResponse = new PageImpl<>(content, pageable, 2);
+
+        given(dataProductSearchService.findDataProductsFiltered(any(request.getClass()))).willReturn(pageResponse);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/data-products/filter")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                requestFields(
+                                        fieldWithPath("title").description("검색하려는 상품명(해당 문자가 포함된 상품 검색)"),
+                                        fieldWithPath("minPrice").description("최소 금액"),
+                                        fieldWithPath("maxPrice").description("최대 금액"),
+                                        fieldWithPath("page").description("페이지 번호"),
+                                        fieldWithPath("categoriesId").description("카테고리 아이디들")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+
+                                        fieldWithPath("data.content[].dataProductId").type(JsonFieldType.NUMBER).description("데이터 상품 키값"),
+                                        fieldWithPath("data.content[].buyCnt").type(JsonFieldType.NUMBER).description("현재까지 구매 수량"),
+                                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING).description("상품명"),
+                                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER).description("가격"),
+                                        fieldWithPath("data.content[].description").type(JsonFieldType.STRING).description("설명"),
+                                        fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 url"),
+                                        fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
+                                        fieldWithPath("data.content[].categoryIds").type(JsonFieldType.ARRAY).optional().description("상품 카테고리 키값들"),
+                                        fieldWithPath("data.content[].categoryNames").type(JsonFieldType.ARRAY).description("상품 카테고리 명칭들"),
+
+                                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
+                                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN).description("정렬되지 않은 경우 여부"),
+                                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN).description("정렬 정보가 비어있는지 여부"),
+                                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
+                                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER).description("페이지 크기"),
+                                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER).description("현재 페이지의 시작 위치"),
+                                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN).description("페이징 여부"),
+                                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN).description("페이징되지 않은 경우 여부"),
+                                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER).description("전체 페이지 수"),
+                                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER).description("전체 요소 수"),
+                                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN).description("마지막 페이지 여부"),
+                                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER).description("현재 페이지의 요소 수"),
+                                        fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("현재 페이지 크기"),
+                                        fieldWithPath("data.number").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
+                                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN).description("정렬 여부"),
+                                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN).description("정렬되지 않은 경우 여부"),
+                                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN).description("정렬 정보가 비어있는지 여부"),
+                                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN).description("첫 번째 페이지 여부"),
+                                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN).description("데이터가 비어있는지 여부")
                                 )
                         )
                 )

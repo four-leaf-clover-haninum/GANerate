@@ -40,7 +40,7 @@ public class DataProductResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class findDataProduct {
-        private Long id;
+        private Long dataProductId;
         private Long buyCnt;
         //원하는 데이터 수량(이미지가 몇개들어있는지)
         private Long dataSize;
@@ -48,7 +48,8 @@ public class DataProductResponse {
         private Long price;
         private String description;
         private List<String> imageUrl; // 이거 이미지 예시 여러개 띄울려면 list로 받아야됨.
-        private List<String> categoriseName;
+        private List<String> categoryNames;
+        private List<Long> categoryIds;
         private String zipfileName;
         private double zipfileSize; //GB사이즈
         private LocalDateTime createdAt;

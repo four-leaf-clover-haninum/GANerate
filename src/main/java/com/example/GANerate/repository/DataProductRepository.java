@@ -2,6 +2,7 @@ package com.example.GANerate.repository;
 
 import com.example.GANerate.domain.DataProduct;
 import com.example.GANerate.domain.ProductCategory;
+import com.example.GANerate.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,14 +20,6 @@ public interface DataProductRepository extends JpaRepository<DataProduct, Long>,
 
     List<DataProduct> findTop3ByOrderByBuyCntDesc();
 
-//    @Query("SELECT dp.id AS dataProductId, dp.buyCnt, dp.price, dp.title, dp.description, dp.imageUrl, dp.createdAt, c.id AS categoryId, c.title AS categoryName "
-//            + "FROM DataProduct dp "
-//            + "LEFT JOIN dp.product_categories pc "
-//            + "LEFT JOIN pc.category c "
-//            + "WHERE (:minprice IS NULL OR dp.price BETWEEN :minprice AND :maxprice) "
-//            + "AND (:title IS NULL OR dp.title LIKE CONCAT('%', :title, '%')) "
-//            + "AND (c.id IS NULL OR c.id IN :categoryids)")
-//    Page<DataProductResponse.findDataProducts> findDataProductsFiltered(
-//            @Param("title") String title, @Param("maxprice") Long maxPrice, @Param("minprice") Long minPrice, @Param("categoryids") List<Long>categoriesId, Pageable pageable);
-
+    // 회원이 판매하는 데이터 상품 조회
+    List<DataProduct> findByUser(User user);
 }
