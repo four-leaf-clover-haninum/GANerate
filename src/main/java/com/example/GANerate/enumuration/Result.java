@@ -31,6 +31,9 @@ public enum Result {
     FAIL_UPLOAD_FILE(4002, "파일 업로드 실패"),
     NO_IMAGE_FILE(4003,"zip 안에 이미지 파일이 존재하지 않음"),
     INCORRECT_FILE_TYPE_Only_JPG_JPEG_PNG(4004, "올바르지 않은 파일 확장자"),
+    FAIL_LOAD_EXAMIMAGE(4005, "이미지 로드 실패"),
+    NOT_FOUND_ZIPFILE(4006, "zip 파일을 찾을 수 없음"),
+    NOT_FOUND_EXAMIMAGE(4007, "예시 사진을 찾을 수 없음"),
 
     //좋아요
     DUPLICATED_HEART(5001, "좋아요 중복"),
@@ -38,6 +41,7 @@ public enum Result {
 
     //카테고리
     NON_EXIST_CATEGORY(6001, "존재하지 않는 카테고리"),
+    NOT_FOUND_CATEGORY(6002, "카테고리를 찾을 수 없음"),
 
     //ORDER
     NOT_BUY_PRODUCT(7001, "구매하지 않은 데이터 상품"),
