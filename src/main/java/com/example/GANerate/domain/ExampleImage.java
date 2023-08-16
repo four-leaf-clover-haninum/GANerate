@@ -20,7 +20,6 @@ public class ExampleImage {
 
     @NotNull
     private String originalFileName;
-
     @NotNull
     private String uploadFileName;
     @Column(length = 15000)
