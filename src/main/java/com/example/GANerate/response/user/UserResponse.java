@@ -134,4 +134,12 @@ public class UserResponse {
     public static class user {
         private Long id;
     }
+
+    @NoArgsConstructor
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class point{
+        private Long point;
+    }
 }
