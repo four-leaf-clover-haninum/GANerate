@@ -1,5 +1,6 @@
 package com.example.GANerate.service.heart;
 
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.DataProduct;
 import com.example.GANerate.domain.Heart;
 import com.example.GANerate.domain.User;
@@ -30,6 +31,7 @@ public class HeartService {
     private final UserService userService;
 
     @Transactional
+    @Timer
     public HeartResponse like(Long dataProductId) {
         User user = userService.getCurrentUser();
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
@@ -52,6 +54,7 @@ public class HeartService {
     }
 
     @Transactional
+    @Timer
     public void unlike(Long dataProductId) {
         User user = userService.getCurrentUser();
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(()-> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));

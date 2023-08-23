@@ -1,5 +1,6 @@
 package com.example.GANerate.service.category;
 
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.Category;
 import com.example.GANerate.repository.CategoryRepository;
 import com.example.GANerate.response.category.CategoryResponse;
@@ -20,6 +21,7 @@ public class CategoryService {
 
     // 전체 카테고리 조회
     @Transactional(readOnly = true)
+    @Timer
     public List<CategoryResponse.findCategories> findCategories(){
         List<Category> categories = categoryRepository.findAll();
 

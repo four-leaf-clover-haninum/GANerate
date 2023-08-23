@@ -1,5 +1,6 @@
 package com.example.GANerate.service.dataProduct;
 
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.DataProduct;
 import com.example.GANerate.domain.ProductCategory;
 import com.example.GANerate.enumuration.Result;
@@ -27,13 +28,14 @@ public class DataProductSearchService {
 
     // 조건 검색 Specification
     @Transactional(readOnly = true)
+    @Timer
     public Page<DataProductResponse.findDataProducts> findDataProductsFiltered(DataProductRequest.filter request) {
         try {
             Pageable pageable = PageRequest.of(request.getPage(), 10, Sort.by("createdAt").descending());
             String title = request.getTitle();
             Long maxPrice = request.getMaxPrice();
             Long minPrice = request.getMinPrice();
-            List<Long> categoriesId = request.getCategoriesId();
+            List<Long> categoriesId = request.getCategoryIds();
 
             Specification<DataProduct> titleSpec = DataProductSpecifications.hasTitle(title);
             Specification<DataProduct> priceSpec = DataProductSpecifications.hasPriceBetween(minPrice, maxPrice);

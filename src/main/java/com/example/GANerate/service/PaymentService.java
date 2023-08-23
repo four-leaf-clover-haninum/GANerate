@@ -1,5 +1,6 @@
 package com.example.GANerate.service;
 
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
@@ -9,6 +10,7 @@ import com.example.GANerate.repository.OrderItemRepository;
 import com.example.GANerate.repository.OrderRepository;
 import com.example.GANerate.repository.PaymentRepository;
 import com.example.GANerate.request.payment.PaymentRequest;
+import com.example.GANerate.response.CustomResponseEntity;
 import com.example.GANerate.response.payment.PaymentResponse;
 import com.example.GANerate.service.dataProduct.DataProductService;
 import com.example.GANerate.service.user.UserService;
@@ -16,6 +18,7 @@ import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.response.IamportResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final UserService userService;
@@ -35,64 +39,43 @@ public class PaymentService {
     private final DataProductRepository dataProductRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    /**
-     * 은행이름에 따른 코드들을 반환해줌<br>
-     * KG이니시스 기준.
-     * @param bankName
-     * @return
-     */
-    public String code(String bankName) {
-        String code="";
-        if(bankName.equals("우리은행")||bankName.equals("우리")) code="20";
-        else if(bankName.equals("국민은행")||bankName.equals("국민")) code="04";
-        return code;
-    }
 
     /**
      * 현재 결제번호에 해당하는 정보를 갖고와서 반환해줌.
      */
-    @Transactional
-    public Payment paymentLookupService(Long paymentId) {
-        Payment payment = paymentRepository.findById(paymentId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_PAYMENT_INFO));
-        return payment;
+//    @Transactional
+//    public Payment paymentLookupService(Long paymentId) {
+//        Payment payment = paymentRepository.findById(paymentId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_PAYMENT_INFO));
+//        return payment;
+//    }
+
+    public IamportResponse<com.siot.IamportRestClient.response.Payment> paymentLookup(String impUid, IamportClient iamportClient) throws IamportResponseException, IOException{
+        return iamportClient.paymentByImpUid(impUid);
     }
 
-    /**
-     * 아임포트 서버쪽 결제내역과 DB에 물건가격을 비교하는 서비스. <br>
-     * 다름 -> 예외 발생시키고 GlobalExceptionHandler쪽에서 예외처리 <br>
-     * 같음 -> 결제정보를 DB에 저장(PaymentsInfo 테이블)
-     * @param irsp (아임포트쪽 결제 내역 조회 정보)
-     */
     @Transactional
-    public void verifyIamportService(IamportResponse<com.siot.IamportRestClient.response.Payment> irsp, int amount, Long dataProductId) {
+    @Timer
+    public PaymentResponse.CreatePayment verifyIamportService(String impUid, int amount, Long dataProductId, IamportClient iamportClient) throws IamportResponseException, IOException {
+        IamportResponse<com.siot.IamportRestClient.response.Payment> irsp = paymentLookup(impUid, iamportClient);
+
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_PAYMENT_INFO));
 
-        //실제로 결제된 금액과 아임포트 서버쪽 결제내역 금액과 같은지 확인
-        //이때 가격은 BigDecimal이란 데이터 타입으로 주로 금융쪽에서 정확한 값표현을 위해씀.
-        //int형으로 비교해주기 위해 형변환 필요.
-        if(irsp.getResponse().getAmount().intValue()!=amount)
+        if (irsp.getResponse().getAmount().intValue() != amount)
             throw new CustomException(Result.UN_CORRECT_PRICE);
 
-        //DB에서 물건가격과 실제 결제금액이 일치하는지 확인하기. 만약 다르면 예외 발생시키기.
-        if(amount!=dataProduct.getPrice()) // 타입 안맞으수도 있음
+        if (amount != dataProduct.getPrice())
             throw new CustomException(Result.UN_CORRECT_PRICE);
 
-        //아임포트에서 서버쪽 결제내역과 DB의 결제 내역 금액이 같으면 DB에 결제 정보를 삽입.
+        // 아임포트에서 서버쪽 결제내역과 DB의 결제 내역 금액이 같으면 DB에 결제 정보를 삽입.
         User user = userService.getCurrentUser();
-        List<Order> orders = user.getOrders();
 
+        // 주문생성 및 연관관계 설정
         Order order = Order.builder()
                 .orderStatus(OrderStatus.DONE).build();
-        orderRepository.save(order);
         order.setUser(user);
+        orderRepository.save(order);
 
-        OrderItem orderItem = OrderItem.builder()
-                .order(order)
-                .dataProduct(dataProduct).build();
-        orderItemRepository.save(orderItem);
-        orderItem.setOrder(order);
-        orderItem.setDataProduct(dataProduct);
-
+        // 결제 정보 생성 및 연관관계 설정
         Payment payment = Payment.builder()
                 .payMethod(irsp.getResponse().getPayMethod())
                 .impUid(irsp.getResponse().getImpUid())
@@ -106,11 +89,36 @@ public class PaymentService {
                 .productTitle(dataProduct.getTitle())
                 .createAt(LocalDateTime.now())
                 .paidAt(LocalDateTime.now())
+                .user(user)
                 .build();
-
         paymentRepository.save(payment);
-    }
 
+
+        // 주문상품 생성 및 연관관계 설정
+        OrderItem orderItem = OrderItem.builder()
+                .order(order)
+                .dataProduct(dataProduct).build();
+        orderItem.setOrder(order);
+        orderItem.setDataProduct(dataProduct);
+        orderItemRepository.save(orderItem);
+
+        // 판매된 상품 가격의 일부를 판매자의 포인트로
+        User seller = dataProduct.getUser();
+        if (seller!=null){
+            seller.addPoint((long) (dataProduct.getPrice()*0.01));
+        }else {
+        }
+
+        return PaymentResponse.CreatePayment.builder()
+                .paymentId(payment.getId())
+                .merchantUid(irsp.getResponse().getMerchantUid())
+                .productTitle(dataProduct.getTitle())
+                .amount(irsp.getResponse().getAmount().intValue())
+                .createAt(payment.getCreateAt())
+                .userId(user.getId())
+                .userName(user.getName())
+                .build();
+    }
     /**
      * 결제 취소할때 필요한 파라미터들을
      * CancelData에 셋업해주고 반환함.
