@@ -1,4 +1,4 @@
-package com.example.GANerate.controller;
+package com.example.GANerate.controller.paymentController;
 
 import com.example.GANerate.domain.Payment;
 import com.example.GANerate.response.CustomResponseEntity;
