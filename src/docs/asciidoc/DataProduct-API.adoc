@@ -13,23 +13,26 @@ operation::data-product-controller-test/find-category-data-products[snippets='ht
 === DataProduct 상품 구매 TOP3 조회
 operation::data-product-controller-test/find-category-data-products-top3[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
 
+[[데이터-상품-생성-요철-GANerate]]
+=== DataProduct 상품 생성 요청(GANerate)
+operation::data-product-controller-test/create-data-product[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[유저가-보유한-데이터-ZIP-업로드]]
+=== DataProduct Zip 업로드(데이터 판매시)
+operation::data-product-controller-test/sale-data-products-zip[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[유저가-보유한-예시-이미지-업로드]]
+=== DataProduct ExampleImages 업로드(데이터 판매시)
+operation::data-product-controller-test/sale-data-products-images[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[유저가-판매할-데이터-요청-폼-작성]]
+=== DataProduct RequestForm 작성(데이터 판매시)
+operation::data-product-controller-test/sale-data-products-form[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
 [[데이터-상품-상세-조회]]
 === DataProduct 데이터 상품 상세 조회
 operation::data-product-controller-test/find-data-product[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
 
-[[유저가-보유한-데이터-ZIP-업로드]]
-=== DataProduct Zip 업로드
-operation::data-product-controller-test/sale-data-products-zip[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
-
-[[유저가-보유한-예시-이미지-업로드]]
-=== DataProduct ExampleImages 업로드
-operation::data-product-controller-test/sale-data-products-images[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
-
-[[유저가-판매할-데이터-요청-폼-작성]]
-=== DataProduct RequestForm 작성
-operation::data-product-controller-test/sale-data-products-form[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
-
-[[유저가-보유한-데이터-판매]]
-=== DataProduct 판매
-operation::data-product-controller-test/sale-data-products[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
-
+[[데이터-상품-조건-검색]]
+=== DataProduct 다중 조건 검색
+operation::data-product-controller-test/find-data-products-filtered[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
