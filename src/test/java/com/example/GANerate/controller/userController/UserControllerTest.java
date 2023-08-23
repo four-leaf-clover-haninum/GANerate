@@ -19,6 +19,7 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.GANerate.config.RestDocsConfig.field;
@@ -281,7 +282,7 @@ class UserControllerTest extends RestDocsTestSupport {
         Category category2 = Category.builder()
                 .title("사람").categoryCode(102).build();
 
-        User user = new User(1l,"test","test","test","test",null);
+        User user = new User(1l,"test","test","test","test",null, 100L);
         DataProduct dataProduct1 = new DataProduct(1l,1l,"test1",100l,"testing1",1l);
         DataProduct dataProduct2 = new DataProduct(2l,2l,"test2",200l,"testing2",2l);
 
@@ -349,77 +350,90 @@ class UserControllerTest extends RestDocsTestSupport {
         ;
     }
 
-//    @Test
-//    @DisplayName("구매 상품 조회")
-//    public void findOrderDataProduct() throws Exception {
-//        // given
-//        DataProductResponse.orderDataProducts response1 = DataProductResponse.orderDataProducts.builder()
-//                .id(1L)
-//                .title("test1")
-//                .price(1000L)
-//                .imageUrl("http://test1.com")
-//                .createdAt(LocalDateTime.now())
-//                .categoriesName(List.of("패션","의료"))
-//                .orderStatus(OrderStatus.DONE)
-//                .build();
-//
-//        DataProductResponse.orderDataProducts response2 = DataProductResponse.orderDataProducts.builder()
-//                .id(2L)
-//                .title("test2")
-//                .price(3000L)
-//                .imageUrl("http://test2.com")
-//                .createdAt(LocalDateTime.now())
-//                .categoriesName(List.of("풍경"))
-//                .orderStatus(OrderStatus.DONE)
-//                .build();
-//
-//        List<DataProductResponse.orderDataProducts> response = List.of(response1,response2);
-//
-//        given(userService.findOrderDataProduct()).willReturn(response);
-//
-//        //when
-//        ResultActions result = this.mockMvc.perform(
-//                get("/v1/users/data-products")
-//                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .accept(MediaType.APPLICATION_JSON)
-//        );
-//
-//        //then
-//        result.andExpect(status().isOk())
-//                .andDo(
-//                        restDocs.document(
-//                                responseFields(
-//                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
-//                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
-//                                        fieldWithPath("data[].id").type(JsonFieldType.NUMBER).description("상품 아이디"),
-//                                        fieldWithPath("data[].title").type(JsonFieldType.STRING).description("상품 명"),
-//                                        fieldWithPath("data[].price").type(JsonFieldType.NUMBER).description("상품 가격"),
-//                                        fieldWithPath("data[].imageUrl").type(JsonFieldType.STRING).description("상품 이미지 url"),
-//                                        fieldWithPath("data[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
-//                                        fieldWithPath("data[].categoriesName").type(JsonFieldType.ARRAY).description("상품이 속한 카테고리명"),
-//                                        fieldWithPath("data[].orderStatus").type(JsonFieldType.STRING).description("주문 상태(DONE)시 다운가능")
-//                                )
-//                        )
-//                )
-//        ;
-//
-//    }
+    @Test
+    @DisplayName("구매 내역 조회")
+    public void findOrderDataProduct() throws Exception {
+        // given
+        DataProductResponse.orderDataProducts response1 = DataProductResponse.orderDataProducts.builder()
+                .dataProductId(1L)
+                .orderId(1L)
+                .title("test1")
+                .price(1000L)
+                .imageUrl("http://test1.com")
+                .createdAt(LocalDateTime.now())
+                .categoriesName(List.of("패션","의료"))
+                .orderStatus(OrderStatus.DONE)
+                .build();
+
+        DataProductResponse.orderDataProducts response2 = DataProductResponse.orderDataProducts.builder()
+                .dataProductId(2L)
+                .orderId(2L)
+                .title("test2")
+                .price(3000L)
+                .imageUrl("http://test2.com")
+                .createdAt(LocalDateTime.now())
+                .categoriesName(List.of("풍경"))
+                .orderStatus(OrderStatus.DONE)
+                .build();
+
+        List<DataProductResponse.orderDataProducts> response = List.of(response1,response2);
+
+        given(userService.findOrderDataProduct()).willReturn(response);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/users/orders")
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data[].dataProductId").type(JsonFieldType.NUMBER).description("상품 아이디"),
+                                        fieldWithPath("data[].orderId").type(JsonFieldType.NUMBER).description("주문 아이디"),
+                                        fieldWithPath("data[].title").type(JsonFieldType.STRING).description("상품 명"),
+                                        fieldWithPath("data[].price").type(JsonFieldType.NUMBER).description("상품 가격"),
+                                        fieldWithPath("data[].imageUrl").type(JsonFieldType.STRING).description("상품 이미지 url"),
+                                        fieldWithPath("data[].createdAt").type(JsonFieldType.STRING).description("상품 생성일자"),
+                                        fieldWithPath("data[].categoriesName").type(JsonFieldType.ARRAY).description("상품이 속한 카테고리명"),
+                                        fieldWithPath("data[].orderStatus").type(JsonFieldType.STRING).description("주문 상태(DONE)시 다운가능")
+                                )
+                        )
+                )
+        ;
+
+    }
 
     @Test
-    @DisplayName("구매 상품 다운로드")
+    @DisplayName("주문 상품 다운로드")
     public void downloadDataProduct() throws Exception {
         //given
-        ZipFileResponse.downloadZip response = ZipFileResponse.downloadZip.builder()
-                .s3Url("http://s3url.com")
-                .originalZipName("originals3zipfile")
+        List<ZipFileResponse.downloadZip> response = new ArrayList<>();
+
+        ZipFileResponse.downloadZip res1 = ZipFileResponse.downloadZip.builder()
+                .s3Url("http://s3url1.com")
+                .originalZipName("originalzipfile1")
                 .build();
+
+        ZipFileResponse.downloadZip res2 = ZipFileResponse.downloadZip.builder()
+                .s3Url("http://s3url2.com")
+                .originalZipName("originalzipfile2")
+                .build();
+
+        response.add(res1);
+        response.add(res2);
 
         given(userService.downloadDataProduct(any(Long.class))).willReturn(response);
 
         //when
         ResultActions result = this.mockMvc.perform(
-                post("/v1/users/data-products/{data-product-id}", 1L)
+                post("/v1/users/orders/{order-id}", 1L)
                         .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
@@ -430,7 +444,7 @@ class UserControllerTest extends RestDocsTestSupport {
                 .andDo(
                         restDocs.document(
                                 pathParameters(
-                                        parameterWithName("data-product-id").description("데이터 키값")
+                                        parameterWithName("order-id").description("주문 번호")
                                 ),
                                 requestHeaders(
                                         headerWithName("Authorization").description("accessToken")
@@ -438,10 +452,80 @@ class UserControllerTest extends RestDocsTestSupport {
                                 responseFields(
                                         fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                         fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
-                                        fieldWithPath("data.s3Url").type(JsonFieldType.STRING).description("S3 다운로드 url"),
-                                        fieldWithPath("data.originalZipName").type(JsonFieldType.STRING).description("오리지날 zip 파일명")
+                                        fieldWithPath("data[].s3Url").type(JsonFieldType.STRING).description("S3 다운로드 url"),
+                                        fieldWithPath("data[].originalZipName").type(JsonFieldType.STRING).description("오리지날 zip 파일명")
                                 )
                         )
                 );
     }
+
+    @Test
+    @DisplayName("회원 판매 상품 조회")
+    public void findSaleDataProduct() throws Exception {
+        //given
+        List<DataProductResponse.findDataProducts> response = new ArrayList<>();
+        DataProductResponse.findDataProducts res1 = DataProductResponse.findDataProducts.builder().dataProductId(1L).buyCnt(12L).title("상품").price(1212L).description("상품입니다").imageUrl("http://www.test.com").createdAt(LocalDateTime.now()).categoryIds(List.of(1L, 2L)).categoryNames(List.of("패션", "의료")).build();
+        DataProductResponse.findDataProducts res2 = DataProductResponse.findDataProducts.builder().dataProductId(2L).buyCnt(100L).title("상품2").price(5000L).description("상품입니다2").imageUrl("http://www.test2.com").createdAt(LocalDateTime.now()).categoryIds(List.of(1L, 2L)).categoryNames(List.of("패션", "의료")).build();
+
+
+        response.add(res1);
+        response.add(res2);
+
+        given(userService.findSaleDataProducts()).willReturn(response);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/users/data-products")
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data[].dataProductId").type(JsonFieldType.NUMBER).description("데이터 상품 id"),
+                                        fieldWithPath("data[].buyCnt").type(JsonFieldType.NUMBER).description("구매 횟수"),
+                                        fieldWithPath("data[].title").type(JsonFieldType.STRING).description("상품 제목"),
+                                        fieldWithPath("data[].price").type(JsonFieldType.NUMBER).description("상품 가격"),
+                                        fieldWithPath("data[].description").type(JsonFieldType.STRING).description("상품 설명"),
+                                        fieldWithPath("data[].imageUrl").type(JsonFieldType.STRING).description("이미지 URL"),
+                                        fieldWithPath("data[].createdAt").type(JsonFieldType.STRING).description("생성일자"),
+                                        fieldWithPath("data[].categoryIds").type(JsonFieldType.ARRAY).description("카테고리 id")
+,                                       fieldWithPath("data[].categoryNames").type(JsonFieldType.ARRAY).description("카테고리 명칭")
+
+                                )
+                        )
+                );
+    }
+
+    @Test
+    @DisplayName("회원 포인트 조회")
+    void findPoint() throws Exception {
+        UserResponse.point response = UserResponse.point.builder().point(10L).build();
+
+        given(userService.findPoint()).willReturn(response);
+
+        //when
+        ResultActions result = this.mockMvc.perform(
+                get("/v1/users/points")
+                        .header("Authorization", "Basic dXNlcjpzZWNyZXQ=")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+        );
+
+        result.andExpect(status().isOk())
+                .andDo(
+                        restDocs.document(
+                                responseFields(
+                                        fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                        fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                        fieldWithPath("data.point").type(JsonFieldType.NUMBER).description("회원 포인트")                                )
+                        ));
+    }
+
 }

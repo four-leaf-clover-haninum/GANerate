@@ -37,7 +37,7 @@ class HeartControllerTest extends RestDocsTestSupport {
         Long userId = 1L;
         Long dataProductId = 1L;
 
-        User user = new User(userId, "test", "test", "test", "test", null);
+        User user = new User(userId, "test", "test", "test", "test", null, 100L);
         DataProduct dataProduct = new DataProduct(dataProductId, 1L, "test", 1000L, "testing", 12L);
         Heart heart = new Heart(1L, user, dataProduct);
 
