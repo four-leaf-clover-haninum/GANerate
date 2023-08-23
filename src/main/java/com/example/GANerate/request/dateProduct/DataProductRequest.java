@@ -31,7 +31,7 @@ public class DataProductRequest {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class filter{
-        private List<Long> categoriesId;
+        private List<Long> categoryIds;
         private String title;
         private Long minPrice;
         private Long maxPrice;

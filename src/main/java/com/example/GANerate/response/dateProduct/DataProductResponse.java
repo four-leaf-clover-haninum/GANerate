@@ -102,7 +102,8 @@ public class DataProductResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class orderDataProducts {
-        private Long id;
+        private Long dataProductId;
+        private Long orderId;
         private String title;
         private Long price;
         private String imageUrl;
