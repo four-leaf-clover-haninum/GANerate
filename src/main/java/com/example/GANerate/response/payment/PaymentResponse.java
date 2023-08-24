@@ -5,18 +5,22 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public class PaymentResponse {
 
     @Getter
     @Builder
     @AllArgsConstructor
     public static class CreatePayment{
-
+        private Long paymentId;
+        private String merchantUid;
+        private String productTitle;
+        private Integer amount;
+        private LocalDateTime createAt;
+        private Long userId;
+        private String userName;
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class VerifyPayment {
-    }
 }

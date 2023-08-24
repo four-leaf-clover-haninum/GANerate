@@ -1,5 +1,6 @@
 package com.example.GANerate.controller.userController;
 
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.ZipFile;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.request.user.UserRequest;
@@ -75,16 +76,16 @@ public class UserController {
         return CustomResponseEntity.success(userService.findOne(id));
     }
 
-    //주문 내역 조회
+    //구매 내역 조회
     @GetMapping("/v1/users/orders")
     public CustomResponseEntity<List<DataProductResponse.orderDataProducts>> findOrderDataProduct(){
         return CustomResponseEntity.success(userService.findOrderDataProduct());
     }
 
     // 주문한 데이터 상품중 구매 완료된 상품 다운로드
-    @PostMapping("/v1/users/data-products/{data-product-id}")
-    public CustomResponseEntity<ZipFileResponse.downloadZip> downloadDataProduct(@PathVariable("data-product-id") Long dataProductId) throws IOException {
-        return CustomResponseEntity.success(userService.downloadDataProduct(dataProductId));
+    @PostMapping("/v1/users/orders/{order-id}")
+    public CustomResponseEntity<List<ZipFileResponse.downloadZip>> downloadDataProduct(@PathVariable("order-id") Long orderId) throws IOException {
+        return CustomResponseEntity.success(userService.downloadDataProduct(orderId));
     }
 
     //회원이 판매하는 상품 조회
@@ -93,7 +94,9 @@ public class UserController {
         return CustomResponseEntity.success(userService.findSaleDataProducts());
     }
 
-
-
-
+    //회원 포인트 조회
+    @GetMapping("/v1/users/points")
+    public CustomResponseEntity<UserResponse.point> findPoint(){
+        return CustomResponseEntity.success(userService.findPoint());
+    }
 }

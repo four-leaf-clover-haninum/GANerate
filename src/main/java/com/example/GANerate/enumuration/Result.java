@@ -47,6 +47,7 @@ public enum Result {
     NOT_BUY_PRODUCT(7001, "구매하지 않은 데이터 상품"),
     FAIL_CREATE_DATA(7002, "데이터 생성 실패"),
     NOT_FOUND_ORDER(7003, "주문을 찾지 못함"),
+    CANT_DOWNLOAD(7004, "다운로드 할 수 없음"),
 
     //결제
     NOT_FOUND_PAYMENT_INFO(8001, "결제정보를 찾지 못함."),

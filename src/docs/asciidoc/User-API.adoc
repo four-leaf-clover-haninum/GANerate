@@ -28,3 +28,19 @@ operation::user-controller-test/logout[snippets='http-request,request-fields,pat
 [[User-좋아요한-데이터-상품-조회]]
 === User 좋아요 상품 조회
 operation::user-controller-test/find-heart-data-products[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-구매-내역-조회]]
+=== User 주문 상품 조회
+operation::user-controller-test/find-order-data-product[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-주문-상품중-다운로드-가능한-상품-다운로드]]
+=== User 구매한 상품 다운로드
+operation::user-controller-test/download-data-product[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-회원-판매-상품-조회]]
+=== User 회원 판매 상품 조회
+operation::user-controller-test/find-sale-data-product[snippets='http-request,request-fields,path-parameters,http-response,response-fields']
+
+[[User-회원-포인트-조회]]
+=== User 회원 포인트 조회
+operation::user-controller-test/find-point[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

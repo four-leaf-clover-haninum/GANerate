@@ -4,21 +4,21 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.example.GANerate.config.SecurityUtils;
 import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.config.redis.RedisUtil;
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.DataProductRepository;
 import com.example.GANerate.repository.HeartRepository;
+import com.example.GANerate.repository.OrderRepository;
 import com.example.GANerate.repository.UserRepository;
 import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.response.user.UserResponse;
-import com.example.GANerate.service.dataProduct.DataProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -50,9 +50,11 @@ public class UserService {
     private final DataProductRepository dataProductRepository;
     private final AmazonS3 amazonS3;
     private final HeartRepository heartRepository;
+    private final OrderRepository orderRepository;
 
     //회원가입
     @Transactional
+    @Timer
     public UserResponse.signup signup(UserRequest.signup request){
         //아이디 중복 검사
         validateDuplicatedUserEmail(request.getEmail());
@@ -70,6 +72,7 @@ public class UserService {
 
     //로그인
     @Transactional(readOnly = true)
+    @Timer
     public UserResponse.signin signin(UserRequest.signin request){
 
         // 일치하는 userId 없음
@@ -93,6 +96,7 @@ public class UserService {
 
     // access Token 재발급
     @Transactional
+    @Timer
     public UserResponse.reissue reissue(UserRequest.reissue request){
 
         String accessToken = tokenProvider.reissue(request);
@@ -104,6 +108,7 @@ public class UserService {
 
     //logout
     @Transactional
+    @Timer
     public UserResponse.logout logout(UserRequest.logout request){
         // 1. Access Token 검증
         if (!tokenProvider.validateToken(request.getAccessToken())) {
@@ -130,6 +135,7 @@ public class UserService {
 
     // 회원이 판매하려고 올린 데이터 상품 조회
     @Transactional(readOnly = true)
+    @Timer
     public List<DataProductResponse.findDataProducts> findSaleDataProducts(){
         User user = getCurrentUser();
         List<DataProduct> dataProducts = dataProductRepository.findByUser(user);
@@ -140,6 +146,7 @@ public class UserService {
 
     // 좋아요 한 데이터 조회
     @Transactional(readOnly = true)
+    @Timer
     public List<DataProductResponse.findDataProducts> findHeartDataProducts(){
         User user = getCurrentUser();
         List<DataProduct> dataProducts = heartRepository.findDataProductsByUser(user).orElseThrow(() -> new CustomException(Result.NOT_FOUND_HEART));
@@ -148,11 +155,12 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    // 주품한 상품 조회(다운로드 가능)
+    // 구매 내역 조회
     @Transactional(readOnly = true)
+    @Timer
     public List<DataProductResponse.orderDataProducts> findOrderDataProduct(){
         User user = getCurrentUser();
-        List<Order> orders = user.getOrders();
+        List<Order> orders = orderRepository.findOrdersByUser(user).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
 
         List<DataProductResponse.orderDataProducts> orderDone = new ArrayList<>(); //다운로드 가능하거나 아직 다운은 못하지만 구매한 상품을 조회(취소 상품은 x)
         for (Order order : orders) {
@@ -172,7 +180,8 @@ public class UserService {
                 }
 
                 DataProductResponse.orderDataProducts orderDataProducts = DataProductResponse.orderDataProducts.builder()
-                        .id(dataProduct.getId())
+                        .dataProductId(dataProduct.getId())
+                        .orderId(order.getId())
                         .title(dataProduct.getTitle())
                         .price(dataProduct.getPrice())
                         .imageUrl(imageUrl)
@@ -187,40 +196,47 @@ public class UserService {
         return orderDone;
     }
 
-    // 구매한 상품중 다운로드 가능한 상품 다운로드
+    // 구매한 상품중 다운로드 가능한 상품 조회
+    // 만약 장바구니를 구현한 경우 한 주문내역에 여러 물품 다운이 가능하니 List로 받음
     @Transactional
-    public ZipFileResponse.downloadZip downloadDataProduct(Long dataProductId) throws IOException {
+    @Timer
+    public List<ZipFileResponse.downloadZip> downloadDataProduct(Long orderId) throws IOException {
         User user = getCurrentUser();
         List<Order> orders = user.getOrders();
-        DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
-        boolean validate = false;
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
-        // 회원이 주문한 상품중 취소되지 않은 상품 중 요청으로 들어온 데이터 상품과 일치하는 상품이 있는지 대조 검증
-        for (Order order : orders) {
-            if (order.getStatus()!=OrderStatus.CANCEL){
-                List<OrderItem> orderItems = order.getOrderItems();
-                for (OrderItem orderItem : orderItems) {
-                    if (orderItem.getDataProduct() == dataProduct) {
-                        log.info(orderItem.getDataProduct().getTitle());
-                        validate = true;
-                    }
-                }
+        List<ZipFileResponse.downloadZip> response = new ArrayList<>();
+
+        if (order.getStatus()==OrderStatus.DONE){
+            List<OrderItem> orderItems = order.getOrderItems();
+            for (OrderItem orderItem : orderItems) {
+                DataProduct dataProduct = orderItem.getDataProduct();
+
+                ZipFile zipFile = dataProduct.getZipFile();
+                String originalFileName = zipFile.getOriginalFileName();
+                String downloadUrl = zipFile.getUploadUrl();
+
+                ZipFileResponse.downloadZip res = ZipFileResponse.downloadZip.builder().originalZipName(originalFileName).s3Url(downloadUrl).build();
+                response.add(res);
             }
-        }
-
-        // 있으면, url과 이름을 조회 해서 프론트로 리턴 그리고 다운로드 수 증가
-        if (validate == true) {
-            ZipFile zipFile = dataProduct.getZipFile();
-            String originalFileName = zipFile.getOriginalFileName();
-            String downloadUrl = zipFile.getUploadUrl();
-
-            dataProduct.addDownloadCnt();
-
-            return ZipFileResponse.downloadZip.builder().originalZipName(originalFileName).s3Url(downloadUrl).build();
         }else{
-            throw new CustomException(Result.NOT_BUY_PRODUCT);
+            throw new CustomException(Result.CANT_DOWNLOAD);
         }
+        return response;
     }
+
+    // 포인트 조회
+    @Transactional(readOnly = true)
+    @Timer
+    public UserResponse.point findPoint(){
+        User user = getCurrentUser();
+        Long point = user.getPoint();
+
+        return UserResponse.point.builder().point(point).build();
+    }
+
+
+
 
     private void validateDuplicatedUserEmail(String userEmail) {
         Boolean existsByNickName = userRepository.existsByEmail(userEmail);
@@ -247,6 +263,7 @@ public class UserService {
                 .name(request.getName())
                 .phoneNum(request.getPhoneNum())
                 .authorities(getAuthorities())
+                .point(0L)
                 .build();
     }
 

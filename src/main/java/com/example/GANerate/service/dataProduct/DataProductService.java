@@ -3,6 +3,7 @@ package com.example.GANerate.service.dataProduct;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
@@ -53,6 +54,7 @@ public class DataProductService {
 
     // 전체 데이터 상품 조회
     @Transactional(readOnly = true)
+    @Timer
     public Page<DataProductResponse.findDataProducts> findDataProducts(Pageable pageable){
         try {
             Page<DataProduct> allProducts = dataProductRepository.findAllBy(pageable);
@@ -79,6 +81,7 @@ public class DataProductService {
 
     // 데이터 상품 상세 조회
     @Transactional(readOnly = true)
+    @Timer
     public DataProductResponse.findDataProduct findDataProduct(Long dataProductId){
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
 
@@ -100,14 +103,12 @@ public class DataProductService {
     // 이 요청은 비동기 처리해야됨. 결제 완료후 프론트에서 요청해야함. 추가로 user가 생성한 데이터 상품이나 구매한 데이터 상품으로 연관관계 설정
     // order 생성(주문 로직단에서 무조건 생성해서 이 메서드로 넘겨줘야함.) -> dataproduct 생성 -> orderItem 생성 -> zip 생성 -> examplimage 생성
     // 데이터 생성 요청(GANerate)
+    // 생성되는 데이터 상품은 회원과 연관관계를 맺지 않는다.
     @Transactional
+    @Timer
     public DataProductResponse.createDataProduct createDataProduct(DataProductRequest.createProduct request, MultipartFile zipFile) throws Exception {
 
         User user = userService.getCurrentUser();
-
-        // 결제 로직 구성후 변경(이건 결제 파트에서 해야함. 그래야 해당 메서드를 통해 ORDER->DONE이 됨)
-//        Long orderId = request.getOrderId();
-//        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
 
 
         //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전달
@@ -121,13 +122,15 @@ public class DataProductService {
                 .build();
         dataProductRepository.save(dataProduct);
 
-        // 결제 로직 구성후 변경
-//        OrderItem orderItem = OrderItem.builder()
-//                .order(order)
-//                .dataProduct(dataProduct)
-//                .build();
-//        orderItem.setOrder(order);
-
+        // 이거는 프론트랑 연결후 주석 해제
+//        Long orderId = request.getOrderId();
+//        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
+//
+//        List<OrderItem> orderItems = order.getOrderItems();
+//
+//        for (OrderItem orderItem : orderItems) {
+//            orderItem.setDataProduct(dataProduct);
+//        }
 
         // 카테고리 가져오기
         List<Long> categoryIds = request.getCategoryIds();
@@ -243,6 +246,7 @@ public class DataProductService {
      */
     // 데이터 zip 업로드
     @Transactional
+    @Timer
     public DataProductResponse.saleDataProductZip saleDataProductZip(MultipartFile zipFile) throws Exception {
 
         // 판매 데이터 zip내부에 이미지 파일 개수 세기
@@ -265,6 +269,7 @@ public class DataProductService {
 
     // 데이터 예시 이미지 업로드
     @Transactional
+    @Timer
     public List<DataProductResponse.saleDataProductImages> saleDataProductImages(List<MultipartFile> exampleImages) throws IOException {
         List<DataProductResponse.saleDataProductImages> response = new ArrayList<>();
         for (MultipartFile exampleImageFile : exampleImages) {
@@ -292,6 +297,7 @@ public class DataProductService {
 
     //데이터 판매 폼 업로드하기 전에 결제 하고
     @Transactional
+    @Timer
     public DataProductResponse.saleDataProduct saleDataProductForm(DataProductRequest.saleProduct request){
 
         User user = userService.getCurrentUser();
@@ -351,6 +357,7 @@ public class DataProductService {
 
     // 데이터 상품 top3 조회
     @Transactional(readOnly = true)
+    @Timer
     public List<DataProductResponse.findDataProducts> findTop3Download(){
         try {
             List<DataProduct> dataProducts = dataProductRepository.findTop3ByOrderByBuyCntDesc();

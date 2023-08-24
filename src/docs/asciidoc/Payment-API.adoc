@@ -1,0 +1,6 @@
+[[Payment-API]]
+== Payment API
+
+[[결제-금액-검증]]
+=== Payment 결제 금액 검증
+operation::payment-controller-test/verify-iamport[snippets='http-request,request-fields,path-parameters,http-response,response-fields']

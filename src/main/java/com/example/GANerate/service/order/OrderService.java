@@ -1,6 +1,7 @@
 package com.example.GANerate.service.order;
 
 import com.example.GANerate.config.SecurityUtils;
+import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
@@ -29,6 +30,7 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
 
     @Transactional(readOnly = true)
+    @Timer
     public OrderResponse.ProductBuyOrder productOrder(Long dataProductId){
         User user = userService.getCurrentUser();
         DataProduct dataProduct = dataProductRepository.findById(dataProductId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));

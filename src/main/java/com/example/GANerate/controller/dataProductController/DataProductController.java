@@ -82,7 +82,7 @@ public class DataProductController {
     }
 
     // 카테고리, 가격, 상품명 조건 받아서 검색 (데이터 상품 조건 검색)
-    @GetMapping("/v1/data-products/filter")
+    @PostMapping("/v1/data-products/filter")
     public CustomResponseEntity<Page<DataProductResponse.findDataProducts>> findDataProductsFiltered(@RequestBody @Valid DataProductRequest.filter request){
         return CustomResponseEntity.success(dataProductSearchService.findDataProductsFiltered(request));
     }

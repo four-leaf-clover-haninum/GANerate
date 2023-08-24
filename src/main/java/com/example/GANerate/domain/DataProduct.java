@@ -65,7 +65,7 @@ public class DataProduct extends BaseEntity{
     /**
      * 다운로드 증가
      */
-    public void addDownloadCnt(){
+    public void addBuyCnt(){
         this.buyCnt +=1;
     }
 

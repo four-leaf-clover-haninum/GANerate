@@ -36,6 +36,9 @@ public class User extends BaseEntity{
     @Column(name = "email_auth", columnDefinition = "INT DEFAULT 0")
     private boolean emailAuth;
 
+    //회원 포인트(자신이 올린 데이터 상품 판매시, 특정 금액 포인트)
+    private Long point;
+
     // Autority와 User는 Many To Many 관계이기 때문에, Join Table이 필수적이다.
     // user_id, authority_name을 필드로 갖는 join 테이블이 생성된다.
     @ManyToMany
@@ -56,13 +59,18 @@ public class User extends BaseEntity{
 
 
     @Builder
-    public User(Long id, String userPw, String name, String email, String phoneNum, Set<Authority> authorities){
+    public User(Long id, String userPw, String name, String email, String phoneNum, Set<Authority> authorities, Long point){
         this.id=id;
         this.userPw=userPw;
         this.name=name;
         this.email=email;
         this.phoneNum=phoneNum;
         this.authorities = authorities;
+        this.point = point;
+    }
+
+    public void addPoint(Long point){
+        this.point = point;
     }
 
 }
