@@ -16,7 +16,7 @@ public class CorsConfig implements WebMvcConfigurer {
 //                .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://3.35.255.4:8080", "http://3.35.255.4:8081", "http://3.35.255.4:80", "http://3.35.255.4:8082")
                 .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://ec2-3-35-255-4.ap-northeast-2.compute.amazonaws.com", "http://localhost:63342") //맨 마지막은 아임포트
 
-//                .exposedHeaders("Authorization") // 'Authorization' 헤더 값을 받아온다
+                .exposedHeaders("Authorization") // 'Authorization' 헤더 값을 받아온다
                 .allowedMethods(
                         "GET","POST","PUT","PATCH","DELETE","OPTIONS"
                 )
