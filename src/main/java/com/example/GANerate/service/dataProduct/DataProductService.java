@@ -5,7 +5,6 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.*;
-import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.enumuration.Result;
 import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.*;
@@ -19,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -39,8 +39,10 @@ public class DataProductService {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
+    @Value("${cloud.aws.s3.bucket.bucket_backend}")
+    private String bucket_backend;
+    @Value("${cloud.aws.s3.bucket.bucket_ai}")
+    private String bucket_ai;
     private final DataProductRepository dataProductRepository;
     private final ZipFileRepository zipFileRepository;
     private final ExampleImageRepository exampleImageRepository;
@@ -100,18 +102,13 @@ public class DataProductService {
         return response;
     }
 
-    // 이 요청은 비동기 처리해야됨. 결제 완료후 프론트에서 요청해야함. 추가로 user가 생성한 데이터 상품이나 구매한 데이터 상품으로 연관관계 설정
-    // order 생성(주문 로직단에서 무조건 생성해서 이 메서드로 넘겨줘야함.) -> dataproduct 생성 -> orderItem 생성 -> zip 생성 -> examplimage 생성
-    // 데이터 생성 요청(GANerate)
-    // 생성되는 데이터 상품은 회원과 연관관계를 맺지 않는다.
     @Transactional
     @Timer
+    @Async
     public DataProductResponse.createDataProduct createDataProduct(DataProductRequest.createProduct request, MultipartFile zipFile) throws Exception {
 
         User user = userService.getCurrentUser();
 
-
-        //전달받은 zip을 업로드 하고, 그걸 db에 저장하고, 플라스크로 그 객체 id를 전달
         // DataProduct 생성
         DataProduct dataProduct = DataProduct.builder()
                 .title(request.getTitle())
@@ -150,8 +147,8 @@ public class DataProductService {
         //전달받은 zip 내부에는 이미지만 있는지 검증 및 예시 생성하기 위한 샘플 이미지 갯수 세기
         processZipFile(zipFile);
 
-        // s3에 업로드
-        List<String> fileInfo = uploadFile(zipFile);
+        // AI용 s3에 업로드
+        List<String> fileInfo = uploadFileAi(zipFile);
 
         String originalFileName = fileInfo.get(0);
         String uploadFileName = fileInfo.get(1);
@@ -161,7 +158,7 @@ public class DataProductService {
         Long createDataSize = request.getDataSize();
         // 플라스크로 전달
         try{
-            String url = "http://127.0.0.1:5000/ganerate"; //추후 ec2꺼로 변경
+            String url = "http://127.0.0.1:8000/ganerate"; //추후 ec2꺼로 변경
             // 요청으로 생성할 데이터 수와 예시 zipid 전달
             ZipFileRequest.ganerateZip requestToFlask = ZipFileRequest.ganerateZip.builder().uploadUrl(uploadUrl).originalFileName(originalFileName).uploadFileName(uploadFileName).createDataSize(createDataSize).build(); // 파일 사이즈 전달
 
@@ -183,7 +180,7 @@ public class DataProductService {
             dataProduct.setUser(user);
 
             // 추가로 zip File 로 부터 이미지 3장 뽑아와서 example 이미지로 만들고 연관관계
-            S3Object object = amazonS3.getObject(bucket, uploadZipFile.getUploadFileName());
+            S3Object object = amazonS3.getObject(bucket_ai, uploadZipFile.getUploadFileName());
             try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(object.getObjectContent()))) {
                 ZipEntry entry;
                 int imageCount = 0;
@@ -210,14 +207,16 @@ public class DataProductService {
                             outputStream.write(buffer, 0, len);
                         }
                         byte[] imageBytes = outputStream.toByteArray();
+                        ObjectMetadata objectMetadata = new ObjectMetadata();
+                        objectMetadata.setContentLength(imageBytes.length);
 
-                        // 4. Upload image to S3
+                        // 4. Upload image to S3 백엔드 s3dp 저장
                         InputStream imageStream = new ByteArrayInputStream(imageBytes);
                         String uploadExamImageName = fileName + String.valueOf(System.currentTimeMillis())+"."+fileExtension;
                         log.info(uploadExamImageName);
-                        amazonS3.putObject(bucket, uploadExamImageName, imageStream, new ObjectMetadata());
+                        amazonS3.putObject(bucket_backend, uploadExamImageName, imageStream, objectMetadata);
                         imageCount++;
-                        String uploadImageUrl = amazonS3.getUrl(bucket, uploadFileName).toString();
+                        String uploadImageUrl = amazonS3.getUrl(bucket_backend, uploadFileName).toString();
 
                         ExampleImage exampleImage = ExampleImage.builder()
                                 .imageUrl(uploadImageUrl)
@@ -251,7 +250,7 @@ public class DataProductService {
 
         // 판매 데이터 zip내부에 이미지 파일 개수 세기
         Long fileCount = processZipFile(zipFile);
-        List<String> zipInfo = uploadFile(zipFile);
+        List<String> zipInfo = uploadFileBackend(zipFile);
 
         ZipFile zip = ZipFile.builder()
                 .originalFileName(zipInfo.get(0))
@@ -279,7 +278,7 @@ public class DataProductService {
                 throw new CustomException(Result.INCORRECT_FILE_TYPE_Only_JPG_JPEG_PNG);
             }
 
-            List<String> exampleImagesInfo = uploadFile(exampleImageFile);
+            List<String> exampleImagesInfo = uploadFileBackend(exampleImageFile);
 
             ExampleImage exampleImage = ExampleImage.builder()
                     .originalFileName(exampleImagesInfo.get(0))
@@ -373,7 +372,7 @@ public class DataProductService {
     }
 
     // s3에 업로드
-    private List<String> uploadFile(MultipartFile multipartFile) {
+    private List<String> uploadFileBackend(MultipartFile multipartFile) {
         try {
             String originalFilename = multipartFile.getOriginalFilename();
             int index = originalFilename.lastIndexOf(".");
@@ -387,10 +386,41 @@ public class DataProductService {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(multipartFile.getSize());
             metadata.setContentType(multipartFile.getContentType());
-            amazonS3.putObject(bucket, uploadFileName, multipartFile.getInputStream(), metadata);
+            amazonS3.putObject(bucket_backend, uploadFileName, multipartFile.getInputStream(), metadata);
 
             // s3로 부터 다운로드 url 반환
-            String uploadUrl = amazonS3.getUrl(bucket, uploadFileName).toString();
+            String uploadUrl = amazonS3.getUrl(bucket_backend, uploadFileName).toString();
+
+            List<String> list = new ArrayList<>();
+            list.add(originalFilename);
+            list.add(uploadFileName);
+            list.add(uploadUrl);
+            return list;
+        }catch (Exception e){
+            throw new CustomException(Result.FAIL_UPLOAD_FILE);
+        }
+    }
+
+
+
+    private List<String> uploadFileAi(MultipartFile multipartFile) {
+        try {
+            String originalFilename = multipartFile.getOriginalFilename();
+            int index = originalFilename.lastIndexOf(".");
+
+            String fileName = originalFilename.substring(0,index); //이름
+            String ext = originalFilename.substring(index + 1); //확장자
+
+            String uploadFileName = fileName + String.valueOf(System.currentTimeMillis())+"."+ext;
+
+            // s3 업로드
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(multipartFile.getSize());
+            metadata.setContentType(multipartFile.getContentType());
+            amazonS3.putObject(bucket_ai, uploadFileName, multipartFile.getInputStream(), metadata);
+
+            // s3로 부터 다운로드 url 반환
+            String uploadUrl = amazonS3.getUrl(bucket_ai, uploadFileName).toString();
 
             List<String> list = new ArrayList<>();
             list.add(originalFilename);
