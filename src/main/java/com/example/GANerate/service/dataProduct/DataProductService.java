@@ -2,7 +2,7 @@ package com.example.GANerate.service.dataProduct;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
+import com.example.GANerate.config.AsyncRestTemplateConfig;
 import com.example.GANerate.config.timer.Timer;
 import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.Result;
@@ -10,22 +10,30 @@ import com.example.GANerate.exception.CustomException;
 import com.example.GANerate.repository.*;
 import com.example.GANerate.request.ZipFileRequest;
 import com.example.GANerate.request.dateProduct.DataProductRequest;
-import com.example.GANerate.response.ZipFileResponse;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.service.user.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.*;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -51,6 +59,7 @@ public class DataProductService {
     private final UserService userService;
     private final RestTemplate restTemplate; // 근데 이렇게 빈으로 넣으면 인스턴스가 하나만 셍성돼서 다른 사영자들 동시 요청들어올대 처리 가능?
     private final OrderRepository orderRepository;
+    private final AsyncRestTemplate asyncRestTemplate;
 
     List<String> allowedExtensions = List.of("jpg", "jpeg", "png");
 
@@ -104,7 +113,7 @@ public class DataProductService {
 
     @Transactional
     @Timer
-    @Async
+    //@Async // 나중에 webclient로 리팩터링 현재는 우성 AsynRestTemplate 사
     public DataProductResponse.createDataProduct createDataProduct(DataProductRequest.createProduct request, MultipartFile zipFile) throws Exception {
 
         User user = userService.getCurrentUser();
@@ -119,7 +128,9 @@ public class DataProductService {
                 .build();
         dataProductRepository.save(dataProduct);
 
-        // 이거는 프론트랑 연결후 주석 해제
+        dataProduct.setUser(user);
+
+        // 이거는 프론트랑 연결후 주석 해제 orderdone 설정
 //        Long orderId = request.getOrderId();
 //        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
 //
@@ -158,85 +169,106 @@ public class DataProductService {
         Long createDataSize = request.getDataSize();
         // 플라스크로 전달
         try{
-            String url = "http://127.0.0.1:8000/ganerate"; //추후 ec2꺼로 변경
-            // 요청으로 생성할 데이터 수와 예시 zipid 전달
-            ZipFileRequest.ganerateZip requestToFlask = ZipFileRequest.ganerateZip.builder().uploadUrl(uploadUrl).originalFileName(originalFileName).uploadFileName(uploadFileName).createDataSize(createDataSize).build(); // 파일 사이즈 전달
-
-            log.info("=======");
-            // 응답으로 생성된 데이터 수와 실제 zipid 전달
-            ZipFileResponse.ganeratedZip ganeratedZip = restTemplate.postForObject(url, requestToFlask, ZipFileResponse.ganeratedZip.class);
-
-            ZipFile uploadZipFile = ZipFile.builder()
-                    .uploadFileName(ganeratedZip.getUploadFileName())
-                    .uploadUrl(ganeratedZip.getUploadUrl())
-                    .originalFileName(ganeratedZip.getOriginalFileName())
-                    .sizeGb(ganeratedZip.getSizeGb())
-                    .build();
-
-//            order.setStatus(OrderStatus.DONE);
-
-            zipFileRepository.save(uploadZipFile);
-            dataProduct.setZipFile(uploadZipFile);
-            dataProduct.setUser(user);
-
-            // 추가로 zip File 로 부터 이미지 3장 뽑아와서 example 이미지로 만들고 연관관계
-            S3Object object = amazonS3.getObject(bucket_ai, uploadZipFile.getUploadFileName());
-            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(object.getObjectContent()))) {
-                ZipEntry entry;
-                int imageCount = 0;
-
-                // 압축해제 3개의 이미지만 뽑아옴(예시 이미지로 사용하려고)
-                while ((entry = zis.getNextEntry()) != null && imageCount < 3) {
-
-                    String originalImageName = entry.getName();
-                    int index = originalImageName.lastIndexOf(".");
-                    String fileName = originalImageName.substring(0,index); //이름
-                    String fileExtension = getFileExtension(originalImageName); // 확장자
-
-                    // mac에서는 zip 압축시 해당 이름으로 시작하는 메타데이터가 같이 있기 때문에 건너 뛰어줘야한다, 실제 서버에서는 필요없는 코드 왜냐면 데이터 업로드하는 시점에서 이미 걸러짐
-                    if (fileName.startsWith("__MACOSX/") || fileName.startsWith("._")) {
-                        continue;
-                    }
-
-                    if (fileExtension.endsWith("jpg") || fileExtension.endsWith("jpeg") || fileExtension.endsWith("png")) {
-                        // 3. Select image files
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        byte[] buffer = new byte[1024];
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            outputStream.write(buffer, 0, len);
-                        }
-                        byte[] imageBytes = outputStream.toByteArray();
-                        ObjectMetadata objectMetadata = new ObjectMetadata();
-                        objectMetadata.setContentLength(imageBytes.length);
-
-                        // 4. Upload image to S3 백엔드 s3dp 저장
-                        InputStream imageStream = new ByteArrayInputStream(imageBytes);
-                        String uploadExamImageName = fileName + String.valueOf(System.currentTimeMillis())+"."+fileExtension;
-                        log.info(uploadExamImageName);
-                        amazonS3.putObject(bucket_backend, uploadExamImageName, imageStream, objectMetadata);
-                        imageCount++;
-                        String uploadImageUrl = amazonS3.getUrl(bucket_backend, uploadFileName).toString();
-
-                        ExampleImage exampleImage = ExampleImage.builder()
-                                .imageUrl(uploadImageUrl)
-                                .uploadFileName(uploadExamImageName)
-                                .originalFileName(originalImageName)
-                                .build();
-
-                        exampleImage.setDataProduct(dataProduct);
-                    }
-                }
-
-            }catch (Exception e) {
-                throw new CustomException(Result.FAIL_LOAD_EXAMIMAGE);
-            }
+            ganerate(uploadUrl, originalFileName, uploadFileName, createDataSize, dataProduct.getId());
+//            log.info(ganeratedZip.getOriginalFileName());
+//            ZipFile uploadZipFile = ZipFile.builder()
+//                    .uploadFileName(ganeratedZip.getUploadFileName())
+//                    .uploadUrl(ganeratedZip.getUploadUrl())
+//                    .originalFileName(ganeratedZip.getOriginalFileName())
+//                    .sizeGb(ganeratedZip.getSizeGb())
+//                    .build();
+//            log.info(uploadZipFile.getOriginalFileName());
+////            order.setStatus(OrderStatus.DONE);
+//
+//            zipFileRepository.save(uploadZipFile);
+//            dataProduct.setZipFile(uploadZipFile);
+//            dataProduct.setUser(user);
+//
+//            // 추가로 zip File 로 부터 이미지 3장 뽑아와서 example 이미지로 만들고 연관관계
+//            S3Object object = amazonS3.getObject(bucket_ai, uploadZipFile.getUploadFileName());
+//            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(object.getObjectContent()))) {
+//                ZipEntry entry;
+//                int imageCount = 0;
+//
+//                // 압축해제 3개의 이미지만 뽑아옴(예시 이미지로 사용하려고)
+//                while ((entry = zis.getNextEntry()) != null && imageCount < 3) {
+//
+//                    String originalImageName = entry.getName();
+//                    int index = originalImageName.lastIndexOf(".");
+//                    String fileName = originalImageName.substring(0,index); //이름
+//                    String fileExtension = getFileExtension(originalImageName); // 확장자
+//
+//                    // mac에서는 zip 압축시 해당 이름으로 시작하는 메타데이터가 같이 있기 때문에 건너 뛰어줘야한다, 실제 서버에서는 필요없는 코드 왜냐면 데이터 업로드하는 시점에서 이미 걸러짐
+//                    if (fileName.startsWith("__MACOSX/") || fileName.startsWith("._")) {
+//                        continue;
+//                    }
+//
+//                    if (fileExtension.endsWith("jpg") || fileExtension.endsWith("jpeg") || fileExtension.endsWith("png")) {
+//                        // 3. Select image files
+//                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//                        byte[] buffer = new byte[1024];
+//                        int len;
+//                        while ((len = zis.read(buffer)) > 0) {
+//                            outputStream.write(buffer, 0, len);
+//                        }
+//                        byte[] imageBytes = outputStream.toByteArray();
+//                        ObjectMetadata objectMetadata = new ObjectMetadata();
+//                        objectMetadata.setContentLength(imageBytes.length);
+//
+//                        // 4. Upload image to S3 백엔드 s3에 저장
+//                        InputStream imageStream = new ByteArrayInputStream(imageBytes);
+//                        String uploadExamImageName = fileName + String.valueOf(System.currentTimeMillis())+"."+fileExtension;
+//                        log.info(uploadExamImageName);
+//                        amazonS3.putObject(bucket_backend, uploadExamImageName, imageStream, objectMetadata);
+//                        imageCount++;
+//                        String uploadImageUrl = amazonS3.getUrl(bucket_backend, uploadFileName).toString();
+//
+//                        ExampleImage exampleImage = ExampleImage.builder()
+//                                .imageUrl(uploadImageUrl)
+//                                .uploadFileName(uploadExamImageName)
+//                                .originalFileName(originalImageName)
+//                                .build();
+//
+//                        exampleImage.setDataProduct(dataProduct);
+//                    }
+//                }
+//
+//            }catch (Exception e) {
+//                throw new CustomException(Result.FAIL_LOAD_EXAMIMAGE);
+//            }
 
             // return 값으로 뭘 줘야될까? 데이터 생성되었다 다운로드 창에서 확인해라 정도만 주면될듯? 굳이 데이터 상품 정보를?
-            return DataProductResponse.createDataProduct.builder().build();
+            return DataProductResponse.createDataProduct.builder().price(dataProduct.getPrice()).build();
         } catch (RestClientException e) {
             throw new CustomException(Result.FAIL_CREATE_DATA);
         }
+    }
+
+    @Async
+    protected void ganerate(String uploadUrl, String originalFileName, String uploadFileName, Long createDataSize, Long dataProductId) throws JsonProcessingException {
+        URI uri = UriComponentsBuilder.fromUriString("http://127.0.0.1:8000")
+                .path("/ganerate")
+                .build()
+                .toUri();
+
+        // String url = "http://127.0.0.1:8000/ganerate"; //추후 ec2꺼로 변경
+        // 요청으로 생성할 데이터 수와 예시 zipid 전달
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.CONTENT_TYPE, "application/json;charset=UTF-8");
+
+        ZipFileRequest.ganerateZip requestToFlask = ZipFileRequest.ganerateZip.builder().uploadUrl(uploadUrl).originalFileName(originalFileName).uploadFileName(uploadFileName).createDataSize(createDataSize).dataProductId(dataProductId).build(); // 파일 사이즈 전달
+
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(requestToFlask);
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(json, httpHeaders);
+
+        log.info("=======");
+        // 응답으로 생성된 데이터 수와 실제 zipid 전달
+        log.info(String.valueOf(asyncRestTemplate));
+        ListenableFuture<ResponseEntity<Void>> res = asyncRestTemplate.postForEntity(uri, requestEntity, Void.class);
     }
 
     /*
