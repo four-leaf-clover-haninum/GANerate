@@ -16,5 +16,6 @@ public class ZipFileRequest {
         private String uploadUrl;
         private Long createDataSize;
         private String uploadFileName;
+        private Long dataProductId;
     }
 }
