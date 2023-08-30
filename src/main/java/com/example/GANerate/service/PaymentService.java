@@ -71,7 +71,7 @@ public class PaymentService {
 
         // 주문생성 및 연관관계 설정
         Order order = Order.builder()
-                .orderStatus(OrderStatus.DONE).build();
+                .orderStatus(OrderStatus.valueOf(OrderStatus.DONE.name())).build();
         order.setUser(user);
         orderRepository.save(order);
 
