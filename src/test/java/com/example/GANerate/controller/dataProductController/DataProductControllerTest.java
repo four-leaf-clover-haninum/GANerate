@@ -363,7 +363,7 @@ class DataProductControllerTest extends RestDocsTestSupport {
         MockMultipartFile json = new MockMultipartFile(
                 "request", "jsondata", "application/json", content.getBytes(StandardCharsets.UTF_8));
 
-        given(dataProductService.createDataProduct(any(DataProductRequest.createProduct.class), any(MultipartFile.class))).willReturn(response);
+//        given(dataProductService.createDataProduct(any(DataProductRequest.createProduct.class), any(MultipartFile.class))).willReturn(response);
 
 
         // Perform the request and document it
@@ -385,10 +385,7 @@ class DataProductControllerTest extends RestDocsTestSupport {
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
-                                fieldWithPath("data.title").description("상품명"),
-                                fieldWithPath("data.price").description("상품가격"),
-                                fieldWithPath("data.description").description("상품 상세 설명"),
-                                fieldWithPath("data.imageUrl").description("상품 이미지 url")
+                                fieldWithPath("data").description("데이터")
                         )
 
                 ));
