@@ -51,7 +51,10 @@ public enum Result {
 
     //결제
     NOT_FOUND_PAYMENT_INFO(8001, "결제정보를 찾지 못함."),
-    UN_CORRECT_PRICE(8002, "결제정보와 결제 가격이 일치하지 않음.")
+    UN_CORRECT_PRICE(8002, "결제정보와 결제 가격이 일치하지 않음."),
+
+    // 알림
+    FAIL_ALRET(9001, "알림 실패")
     ;
 
 
