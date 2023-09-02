@@ -47,13 +47,20 @@ public class DataProductController {
     }
 
 
-    // 데이터 상품 생성(GANerate 이용) 결제후 요청해야함.
+    // 데이터 상품 생성(GANerate 이용) 결제후 요청해야함. 비동기 처리
     @PostMapping("/v1/data-products")
     public CustomResponseEntity<?> createDataProduct(
             @RequestPart @Valid final DataProductRequest.createProduct request, @RequestPart MultipartFile zipFile) throws Exception {
         dataProductService.createDataProduct(request, zipFile);
         return CustomResponseEntity.success();
     }
+
+    // 동기 처리 경우
+//    @PostMapping("/v1/data-products")
+//    public CustomResponseEntity<?> createDataProduct(
+//            @RequestPart @Valid final DataProductRequest.createProduct request, @RequestPart MultipartFile zipFile) throws Exception {
+//        return CustomResponseEntity.success(dataProductService.createDataProduct(request, zipFile));
+//    }
 
     // 데이터 상품 판매(zip)
     @PostMapping("/v1/data-products/sale/zip")
