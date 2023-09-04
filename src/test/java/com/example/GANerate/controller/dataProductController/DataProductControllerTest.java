@@ -1,5 +1,6 @@
 package com.example.GANerate.controller.dataProductController;
 
+import com.example.GANerate.domain.DataProductType;
 import com.example.GANerate.request.dateProduct.DataProductRequest;
 import com.example.GANerate.response.dateProduct.DataProductResponse;
 import com.example.GANerate.support.docs.RestDocsTestSupport;
@@ -331,7 +332,7 @@ class DataProductControllerTest extends RestDocsTestSupport {
     }
 
     @Test
-    @DisplayName("데이터 상품 생성(GANerate)")
+    @DisplayName("데이터 상품 생성(GANerate) 결제전")
     void createDataProduct() throws Exception {
         // Sample request data
 //        DataProductRequest.createProduct request = DataProductRequest.createProduct.builder()
@@ -343,14 +344,9 @@ class DataProductControllerTest extends RestDocsTestSupport {
 //                .build();
 
         DataProductResponse.createDataProduct response = DataProductResponse.createDataProduct.builder()
-
-                .title("Product Title")
-                .description("Product Description")
-                .imageUrl("http://test1.com")
-                .price(1000L)
                 .build();
 
-        String content = objectMapper.writeValueAsString(new DataProductRequest.createProduct(1L, "Product Title", "Product Description", 10L, Arrays.asList(1L, 2L)));
+        String content = objectMapper.writeValueAsString(new DataProductRequest.createProductAfter(1L, 1L));
 
 //        Path zipFilePath = Paths.get("src/test/resources/아카이브 복사본.zip");
         MockMultipartFile zipFile = new MockMultipartFile(
@@ -368,7 +364,7 @@ class DataProductControllerTest extends RestDocsTestSupport {
 
         // Perform the request and document it
         ResultActions result = this.mockMvc.perform(
-                multipart("/v1/data-products")
+                multipart("/v1/data-products/after")
                         .file(zipFile)
                         .file(json)
                         .contentType(MediaType.MULTIPART_MIXED)
@@ -380,12 +376,61 @@ class DataProductControllerTest extends RestDocsTestSupport {
                 .andDo(restDocs.document(
                         relaxedRequestParts(
                                 partWithName("zipFile").description("생성시 사용할 예시 zip 파일"),
-                                partWithName("request").description("상품 생성 요청 폼(orderId, title, description, dataSize, categoryIds)")
+                                partWithName("request").description("상품 생성 요청 데이터(orderId, dataProductId)")
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
                                 fieldWithPath("data").description("데이터")
+                        )
+
+                ));
+    }
+
+    @Test
+    @DisplayName("데이터 상품 생성(GANerate) 결제전")
+    void createDataProductBefore() throws Exception {
+        // Sample request data
+        DataProductRequest.createProductBefore request = DataProductRequest.createProductBefore.builder()
+                .title("Product Title")
+                .description("Product Description")
+                .dataSize(10L)
+                .categoryIds(Arrays.asList(1L, 2L))
+                .build();
+
+        DataProductResponse.createDataProductBefore response = DataProductResponse.createDataProductBefore.builder()
+                .title("Product Title")
+                .price(1000L)
+                        .dataProductId(1L)
+                                .userName("필환").userEmail("abc@naver.com").build();
+
+        given(dataProductService.createDataProductBefore(any(DataProductRequest.createProductBefore.class))).willReturn(response);
+
+        // Perform the request and document it
+        ResultActions result = this.mockMvc.perform(
+                multipart("/v1/data-products/before")
+                        .content(objectMapper.writeValueAsString(request))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+        );
+
+        result.andExpect(status().isOk())
+                .andDo(restDocs.document(
+                        requestFields(
+                                fieldWithPath("title").description("상품명"),
+                                fieldWithPath("description").description("상품 설명"),
+                                fieldWithPath("dataSize").description("데이터 갯수"),
+                                fieldWithPath("categoryIds").description("카테고리 키값 리스트")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("결과코드"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지"),
+                                fieldWithPath("data.title").type(JsonFieldType.STRING).description("상품명"),
+                                fieldWithPath("data.price").type(JsonFieldType.NUMBER).description("상품 가격"),
+                                fieldWithPath("data.dataProductId").type(JsonFieldType.NUMBER).description("데이터 상품 키값"),
+                                fieldWithPath("data.userName").type(JsonFieldType.STRING).description("유저 이름"),
+                                fieldWithPath("data.userEmail").type(JsonFieldType.STRING).description("유저 이메일")
                         )
 
                 ));

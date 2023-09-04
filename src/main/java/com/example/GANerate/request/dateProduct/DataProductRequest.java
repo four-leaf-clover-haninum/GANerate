@@ -17,7 +17,6 @@ public class DataProductRequest {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class createProductBefore{
-        private Long orderId;
         private String title;
         private String description;
 //        private String imageUrl;
