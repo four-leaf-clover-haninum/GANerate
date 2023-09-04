@@ -1,6 +1,7 @@
 package com.example.GANerate.repository;
 
 import com.example.GANerate.domain.DataProduct;
+import com.example.GANerate.domain.DataProductType;
 import com.example.GANerate.domain.ProductCategory;
 import com.example.GANerate.domain.User;
 import org.springframework.data.domain.Page;
@@ -14,9 +15,9 @@ import java.util.List;
 @Repository
 public interface DataProductRepository extends JpaRepository<DataProduct, Long>, JpaSpecificationExecutor<DataProduct> {
 
-    Page<DataProduct> findAllBy(Pageable pageable);
+    Page<DataProduct> findAllByDataProductType(Pageable pageable, DataProductType dataProductType);
 
-    Page<DataProduct> findAllByProductCategoriesIn(List<ProductCategory> productCategories, Pageable pageable);
+    Page<DataProduct> findAllByProductCategoriesInAndDataProductType(List<ProductCategory> productCategories, DataProductType dataProductType, Pageable pageable);
 
     List<DataProduct> findTop3ByOrderByBuyCntDesc();
 

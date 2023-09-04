@@ -16,7 +16,7 @@ public class DataProductRequest {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class createProduct{
+    public static class createProductBefore{
         private Long orderId;
         private String title;
         private String description;
@@ -24,6 +24,15 @@ public class DataProductRequest {
         private Long dataSize; // 원하는 이미지 수량
 //        private LocalDateTime createdAt;
         private List<Long> categoryIds;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class createProductAfter{
+        private Long orderId;
+        private Long dataProductId;
     }
 
     @Getter
