@@ -74,7 +74,7 @@ public class DataProductService {
     @Timer
     public Page<DataProductResponse.findDataProducts> findDataProducts(Pageable pageable){
         try {
-            Page<DataProduct> allProducts = dataProductRepository.findAllBy(pageable);
+            Page<DataProduct> allProducts = dataProductRepository.findAllByDataProductType(pageable, DataProductType.DONE);
             return allProducts.map(this::convertToFindDataProductsResponse);
         }catch (Exception e){
             throw new CustomException(Result.NOT_FOUND_DATA_PRODUCT);
@@ -89,7 +89,7 @@ public class DataProductService {
         List<ProductCategory> productCategories = category.getProductCategories();
 
         try {
-            Page<DataProduct> dataProducts = dataProductRepository.findAllByProductCategoriesIn(productCategories, pageable);
+            Page<DataProduct> dataProducts = dataProductRepository.findAllByProductCategoriesInAndDataProductType(productCategories, DataProductType.DONE, pageable);
             return dataProducts.map(this::convertToFindDataProductsResponse);
         }catch (Exception e){
             throw new CustomException(Result.NOT_FOUND_DATA_PRODUCT);
@@ -119,9 +119,7 @@ public class DataProductService {
 
     @Transactional
     @Timer
-    //@Async // 나중에 webclient로 리팩터링 현재는 우성 AsynRestTemplate 사
-    public void createDataProduct(DataProductRequest.createProduct request, MultipartFile zipFile) throws Exception {
-
+    public DataProductResponse.createDataProductBefore createDataProductBefore(DataProductRequest.createProductBefore request) throws Exception {
         User user = userService.getCurrentUser();
 
         // DataProduct 생성
@@ -131,20 +129,9 @@ public class DataProductService {
                 .buyCnt(0L)
                 .price(request.getDataSize()*100) // 가격은 별도 로직 필요
                 .dataSize(request.getDataSize())
+                .dataProductType(DataProductType.PREPARE) // 아직 준비중
                 .build();
         dataProductRepository.save(dataProduct);
-
-        dataProduct.setUser(user);
-
-        // 이거는 프론트랑 연결후 주석 해제 orderdone 설정
-//        Long orderId = request.getOrderId();
-//        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
-//
-//        List<OrderItem> orderItems = order.getOrderItems();
-//
-//        for (OrderItem orderItem : orderItems) {
-//            orderItem.setDataProduct(dataProduct);
-//        }
 
         // 카테고리 가져오기
         List<Long> categoryIds = request.getCategoryIds();
@@ -161,6 +148,40 @@ public class DataProductService {
             dataProduct.addProductCategory(productCategory);
             category.addProductCategory(productCategory);
         }
+
+        return DataProductResponse.createDataProductBefore.builder()
+                .dataProductId(dataProduct.getId())
+                .title(dataProduct.getTitle())
+                .price(dataProduct.getPrice())
+                .userEmail(user.getEmail())
+                .userName(user.getName())
+                .build();
+    }
+
+
+
+    @Transactional
+    @Timer
+    //@Async // 나중에 webclient로 리팩터링 현재는 우성 AsynRestTemplate 사
+    public void createDataProductAfter(DataProductRequest.createProductAfter request, MultipartFile zipFile) throws Exception {
+
+        User user = userService.getCurrentUser();
+
+        DataProduct dataProduct = dataProductRepository.findById(request.getDataProductId()).orElseThrow(() -> new CustomException(Result.NOT_FOUND_DATA_PRODUCT));
+
+        // 이거는 프론트랑 연결후 주석 해제 orderdone 설정
+        Long orderId = request.getOrderId();
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(Result.NOT_FOUND_ORDER));
+
+        List<OrderItem> orderItems = order.getOrderItems();
+
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setDataProduct(dataProduct);
+        }
+
+        dataProduct.setUser(user);
+        dataProduct.setDataProductType(DataProductType.DONE);
+
         //전달받은 zip 내부에는 이미지만 있는지 검증 및 예시 생성하기 위한 샘플 이미지 갯수 세기
         processZipFile(zipFile);
 
@@ -172,7 +193,7 @@ public class DataProductService {
         String uploadUrl = fileInfo.get(2);
 
         // 플라스크로 전달할 정보: 오리지날 이름, 업로드 유알엘, 생성 개수
-        Long createDataSize = request.getDataSize();
+        Long createDataSize = dataProduct.getDataSize();
         SseEmitter sseEmitter = notificationService.subscribe(user.getId());
         // 플라스크로 전달
         try{
