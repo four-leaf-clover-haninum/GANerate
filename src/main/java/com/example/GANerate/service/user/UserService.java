@@ -196,8 +196,6 @@ public class UserService {
         return orderDone;
     }
 
-    // 구매한 상품중 다운로드 가능한 상품 조회
-    // 만약 장바구니를 구현한 경우 한 주문내역에 여러 물품 다운이 가능하니 List로 받음
     @Transactional
     @Timer
     public List<ZipFileResponse.downloadZip> downloadDataProduct(Long orderId) throws IOException {
