@@ -28,6 +28,18 @@ public class DataProductResponse {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
+    public static class createDataProductBefore {
+        private String title;
+        private Long price;
+        private Long dataProductId;
+        private String userEmail;
+        private String userName;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class createDataProduct {
         private String title;
         private Long price;
