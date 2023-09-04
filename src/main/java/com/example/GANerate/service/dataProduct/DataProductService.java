@@ -129,7 +129,7 @@ public class DataProductService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .buyCnt(0L)
-                .price(request.getDataSize()*1000) // 가격은 별도 로직 필요
+                .price(request.getDataSize()*100) // 가격은 별도 로직 필요
                 .dataSize(request.getDataSize())
                 .build();
         dataProductRepository.save(dataProduct);
