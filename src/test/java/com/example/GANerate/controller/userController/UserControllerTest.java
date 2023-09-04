@@ -1,9 +1,6 @@
 package com.example.GANerate.controller.userController;
 
-import com.example.GANerate.domain.Category;
-import com.example.GANerate.domain.DataProduct;
-import com.example.GANerate.domain.Heart;
-import com.example.GANerate.domain.User;
+import com.example.GANerate.domain.*;
 import com.example.GANerate.enumuration.OrderStatus;
 import com.example.GANerate.request.user.UserRequest;
 import com.example.GANerate.response.ZipFileResponse;
@@ -283,8 +280,8 @@ class UserControllerTest extends RestDocsTestSupport {
                 .title("사람").categoryCode(102).build();
 
         User user = new User(1l,"test","test","test","test",null, 100L);
-        DataProduct dataProduct1 = new DataProduct(1l,1l,"test1",100l,"testing1",1l);
-        DataProduct dataProduct2 = new DataProduct(2l,2l,"test2",200l,"testing2",2l);
+        DataProduct dataProduct1 = new DataProduct(1l,1l,"test1",100l,"testing1",1l, DataProductType.DONE);
+        DataProduct dataProduct2 = new DataProduct(2l,2l,"test2",200l,"testing2",2l, DataProductType.DONE);
 
         //given
         DataProductResponse.findDataProducts test1 = DataProductResponse.findDataProducts.builder()

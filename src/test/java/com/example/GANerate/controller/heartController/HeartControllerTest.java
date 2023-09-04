@@ -1,6 +1,7 @@
 package com.example.GANerate.controller.heartController;
 
 import com.example.GANerate.domain.DataProduct;
+import com.example.GANerate.domain.DataProductType;
 import com.example.GANerate.domain.Heart;
 import com.example.GANerate.domain.User;
 import com.example.GANerate.response.heart.HeartResponse;
@@ -38,7 +39,7 @@ class HeartControllerTest extends RestDocsTestSupport {
         Long dataProductId = 1L;
 
         User user = new User(userId, "test", "test", "test", "test", null, 100L);
-        DataProduct dataProduct = new DataProduct(dataProductId, 1L, "test", 1000L, "testing", 12L);
+        DataProduct dataProduct = new DataProduct(dataProductId, 1L, "test", 1000L, "testing", 12L, DataProductType.DONE);
         Heart heart = new Heart(1L, user, dataProduct);
 
         HeartResponse response = HeartResponse.builder()
