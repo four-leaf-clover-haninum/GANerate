@@ -37,6 +37,9 @@ public class DataProduct extends BaseEntity{
     @NotNull
     private String description;
 
+    @Enumerated(value = EnumType.STRING)
+    private DataProductType dataProductType;
+
     @OneToMany(mappedBy = "dataProduct", cascade = CascadeType.ALL)
     private List<ProductCategory> productCategories = new ArrayList<>();
 
@@ -52,14 +55,14 @@ public class DataProduct extends BaseEntity{
     private User user;
 
     @Builder
-    public DataProduct(Long id, Long buyCnt, String title, Long price, String description, Long dataSize){
+    public DataProduct(Long id, Long buyCnt, String title, Long price, String description, Long dataSize, DataProductType dataProductType){
         this.id = id;
         this.buyCnt = buyCnt;
         this.title=title;
         this.price=price;
         this.description=description;
         this.dataSize=dataSize;
-
+        this.dataProductType=DataProductType.PREPARE;
     }
 
     /**
@@ -75,6 +78,10 @@ public class DataProduct extends BaseEntity{
     public void setUser(User user){
         this.user = user;
 //        user.getDataProducts().add(this);
+    }
+
+    public void setDataProductType(DataProductType dataProductType){
+        this.dataProductType=dataProductType;
     }
 
     public void addProductCategory(ProductCategory productCategory){
