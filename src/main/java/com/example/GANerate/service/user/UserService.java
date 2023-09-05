@@ -168,9 +168,12 @@ public class UserService {
             for (OrderItem orderItem : orderItems) {
                 DataProduct dataProduct = orderItem.getDataProduct();
 
+                String imageUrl = null;
                 List<ExampleImage> exampleImages = dataProduct.getExampleImages();
-                ExampleImage exampleImage = exampleImages.get(0);
-                String imageUrl = exampleImage.getImageUrl();
+                if (!exampleImages.isEmpty()){
+                    ExampleImage exampleImage = exampleImages.get(0);
+                    imageUrl = exampleImage.getImageUrl();
+                }
 
                 List<ProductCategory> productCategories = dataProduct.getProductCategories();
                 List<String> categoriesName = new ArrayList<>();
@@ -196,6 +199,7 @@ public class UserService {
         return orderDone;
     }
 
+    // 다운로드
     @Transactional
     @Timer
     public List<ZipFileResponse.downloadZip> downloadDataProduct(Long orderId) throws IOException {
@@ -209,6 +213,10 @@ public class UserService {
             List<OrderItem> orderItems = order.getOrderItems();
             for (OrderItem orderItem : orderItems) {
                 DataProduct dataProduct = orderItem.getDataProduct();
+
+                if (dataProduct.getDataProductType()==DataProductType.PREPARE){
+                    throw new CustomException(Result.CANT_DOWNLOAD);
+                }
 
                 ZipFile zipFile = dataProduct.getZipFile();
                 String originalFileName = zipFile.getOriginalFileName();
