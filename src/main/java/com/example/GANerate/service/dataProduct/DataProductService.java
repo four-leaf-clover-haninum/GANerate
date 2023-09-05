@@ -162,7 +162,6 @@ public class DataProductService {
 
     @Transactional
     @Timer
-    //@Async // 나중에 webclient로 리팩터링 현재는 우성 AsynRestTemplate 사
     public void createDataProductAfter(DataProductRequest.createProductAfter request, MultipartFile zipFile) throws Exception {
 
         User user = userService.getCurrentUser();
@@ -352,7 +351,7 @@ public class DataProductService {
 
     @Async
     public ListenableFuture<ResponseEntity<Void>> ganerate(String uploadUrl, String originalFileName, String uploadFileName, Long createDataSize, Long dataProductId) throws JsonProcessingException {
-        URI uri = UriComponentsBuilder.fromUriString("http://127.0.0.1:8000")
+        URI uri = UriComponentsBuilder.fromUriString("http://3.36.38.211:8000") //디버깅 시에 5000, 실제 배포시 8000
                 .path("/ganerate")
                 .build()
                 .toUri();

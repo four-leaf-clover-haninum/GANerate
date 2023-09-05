@@ -333,7 +333,7 @@ class DataProductControllerTest extends RestDocsTestSupport {
 
     @Test
     @DisplayName("데이터 상품 생성(GANerate) 결제전")
-    void createDataProduct() throws Exception {
+    void createDataProductAfter() throws Exception {
         // Sample request data
 //        DataProductRequest.createProduct request = DataProductRequest.createProduct.builder()
 //                .orderId(1L)
