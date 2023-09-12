@@ -48,6 +48,7 @@ class PaymentControllerTest extends RestDocsTestSupport {
                 .amount(1000)
                 .createAt(LocalDateTime.now())
                 .userId(1L)
+                .orderId(1L)
                 .userName("홍길동").build();
 
         given(paymentService.verifyIamportService(eq("홍길동_20230812"), eq(1000), eq(123L), any(IamportClient.class))).willReturn(response);
@@ -76,7 +77,8 @@ class PaymentControllerTest extends RestDocsTestSupport {
                                 fieldWithPath("data.amount").type(JsonFieldType.NUMBER).description("결제 금액"),
                                 fieldWithPath("data.createAt").type(JsonFieldType.STRING).description("결제일자"),
                                 fieldWithPath("data.userId").type(JsonFieldType.NUMBER).description("회원 id"),
-                                fieldWithPath("data.userName").type(JsonFieldType.STRING).description("회원명")
+                                fieldWithPath("data.userName").type(JsonFieldType.STRING).description("회원명"),
+                                fieldWithPath("data.orderId").type(JsonFieldType.NUMBER).description("주문 번호")
                                 )
                         )
                 );
