@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableConfigurationProperties(value = {CacheProperties.class})
+//@EnableConfigurationProperties(value = {CacheProperties.class})
 
 @EnableScheduling
 public class GaNerateApplication {
