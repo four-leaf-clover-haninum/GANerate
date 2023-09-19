@@ -21,7 +21,6 @@ public class PaymentResponse {
         private LocalDateTime createAt;
         private Long userId;
         private String userName;
-        private Long orderId;
     }
 
 }
