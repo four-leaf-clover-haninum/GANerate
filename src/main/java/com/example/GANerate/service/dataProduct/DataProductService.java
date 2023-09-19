@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
@@ -97,6 +98,7 @@ public class DataProductService {
     }
 
     // 데이터 상품 상세 조회
+//    @Cacheable(value = "product", key = "#dataProductId")
     @Transactional(readOnly = true)
     @Timer
     public DataProductResponse.findDataProduct findDataProduct(Long dataProductId){
@@ -351,7 +353,7 @@ public class DataProductService {
 
     @Async
     public ListenableFuture<ResponseEntity<Void>> ganerate(String uploadUrl, String originalFileName, String uploadFileName, Long createDataSize, Long dataProductId) throws JsonProcessingException {
-        URI uri = UriComponentsBuilder.fromUriString("http://3.36.38.211:8000") //디버깅 시에 5000, 실제 배포시 8000
+        URI uri = UriComponentsBuilder.fromUriString("http://3.36.38.211:8000") //디버깅 시에 5000, 실제 배포시 8000 / http://3.36.38.211:8000
                 .path("/ganerate")
                 .build()
                 .toUri();
