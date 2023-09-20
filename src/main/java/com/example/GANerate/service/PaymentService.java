@@ -117,6 +117,7 @@ public class PaymentService {
                 .createAt(payment.getCreateAt())
                 .userId(user.getId())
                 .userName(user.getName())
+                .orderId(order.getId())
                 .build();
     }
     /**

@@ -70,7 +70,7 @@ public class DataProductService {
 
     List<String> allowedExtensions = List.of("jpg", "jpeg", "png");
 
-    // 전체 데이터 상품 조회
+    // 전체 데이터 상품 조회<수정필요>
     @Transactional(readOnly = true)
     @Timer
     public Page<DataProductResponse.findDataProducts> findDataProducts(Pageable pageable){
@@ -353,7 +353,7 @@ public class DataProductService {
 
     @Async
     public ListenableFuture<ResponseEntity<Void>> ganerate(String uploadUrl, String originalFileName, String uploadFileName, Long createDataSize, Long dataProductId) throws JsonProcessingException {
-        URI uri = UriComponentsBuilder.fromUriString("http://3.36.38.211:8000") //디버깅 시에 5000, 실제 배포시 8000 / http://3.36.38.211:8000
+        URI uri = UriComponentsBuilder.fromUriString("http://3.35.255.4:8000") //디버깅 시에 5000, 실제 배포시 8000 / http://3.35.255.4:8000
                 .path("/ganerate")
                 .build()
                 .toUri();
