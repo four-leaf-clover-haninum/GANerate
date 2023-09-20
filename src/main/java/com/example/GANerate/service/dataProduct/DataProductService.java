@@ -353,7 +353,7 @@ public class DataProductService {
 
     @Async
     public ListenableFuture<ResponseEntity<Void>> ganerate(String uploadUrl, String originalFileName, String uploadFileName, Long createDataSize, Long dataProductId) throws JsonProcessingException {
-        URI uri = UriComponentsBuilder.fromUriString("http://3.35.255.4:8000") //디버깅 시에 5000, 실제 배포시 8000 / http://3.35.255.4:8000
+        URI uri = UriComponentsBuilder.fromUriString("http://3.36.38.211:8000") //디버깅 시에 5000, 실제 배포시 8000 / http://3.35.255.4:8000
                 .path("/ganerate")
                 .build()
                 .toUri();
