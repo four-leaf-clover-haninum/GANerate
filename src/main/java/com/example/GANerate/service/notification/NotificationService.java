@@ -1,5 +1,7 @@
 package com.example.GANerate.service.notification;
 
+import com.example.GANerate.config.SecurityUtils;
+import com.example.GANerate.config.jwt.TokenProvider;
 import com.example.GANerate.repository.EmitterRepository;
 import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ public class NotificationService {
 
     private final EmitterRepository emitterRepository;
     private final UserService userService;
+    private final TokenProvider tokenProvider;
 
     /**
      * 클라이언트가 구독을 위해 호출하는 메서드.
@@ -27,9 +30,10 @@ public class NotificationService {
      * @param  - 구독하는 클라이언트의 사용자 아이디.
      * @return SseEmitter - 서버에서 보낸 이벤트 Emitter
      */
-    @Transactional
     public SseEmitter subscribe() {
-        Long userId = userService.getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
+        // or
+        // tokenProvider.getUserId(token);
         log.info(userId.toString());
         SseEmitter emitter = createEmitter(userId);
 
@@ -46,7 +50,6 @@ public class NotificationService {
      * @param userId - 메세지를 전송할 사용자의 아이디.
      * @param event  - 전송할 이벤트 객체.
      */
-    @Transactional
     public void notify(Long userId, Object event) {
         sendToClient(userId, event);
     }
