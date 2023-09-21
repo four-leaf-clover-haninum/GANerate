@@ -15,9 +15,9 @@ public class NotificationController {
     private final NotificationService notificationService;
 
 
-    @GetMapping(value = "/v1/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@PathVariable Long userId) {
-        return notificationService.subscribe(userId);
+    @GetMapping(value = "/v1/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe() {
+        return notificationService.subscribe();
     }
 
     @PostMapping("/v1/send-data/{id}")

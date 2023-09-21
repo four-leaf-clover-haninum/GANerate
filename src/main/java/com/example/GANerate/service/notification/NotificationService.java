@@ -1,6 +1,7 @@
 package com.example.GANerate.service.notification;
 
 import com.example.GANerate.repository.EmitterRepository;
+import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,14 +18,16 @@ public class NotificationService {
     private static final Long DEFAULT_TIMEOUT = 0L;
 
     private final EmitterRepository emitterRepository;
+    private final UserService userService;
 
     /**
      * 클라이언트가 구독을 위해 호출하는 메서드.
      *
-     * @param userId - 구독하는 클라이언트의 사용자 아이디.
+     * @param  - 구독하는 클라이언트의 사용자 아이디.
      * @return SseEmitter - 서버에서 보낸 이벤트 Emitter
      */
-    public SseEmitter subscribe(Long userId) {
+    public SseEmitter subscribe() {
+        Long userId = userService.getCurrentUserId();
         SseEmitter emitter = createEmitter(userId);
 
         sendToClient(userId, "EventStream Created. [userId=" + userId + "]");
