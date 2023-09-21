@@ -195,7 +195,7 @@ public class DataProductService {
 
         // 플라스크로 전달할 정보: 오리지날 이름, 업로드 유알엘, 생성 개수
         Long createDataSize = dataProduct.getDataSize();
-        SseEmitter sseEmitter = notificationService.subscribe(user.getId());
+//        SseEmitter sseEmitter = notificationService.subscribe(user.getId());
         // 플라스크로 전달
         try{
             ListenableFuture<ResponseEntity<Void>> ganerate = ganerate(uploadUrl, originalFileName, uploadFileName, createDataSize, dataProduct.getId());
@@ -204,18 +204,17 @@ public class DataProductService {
                 ganerate.addCallback(
                         r -> {
                             log.info(r.toString());
-                            String s = notificationService.sendSseEvent(sseEmitter, r);
-                            log.info(s);
+                            notificationService.notify(user.getId(), r);
                             // 클라이언트에 SSE 연결 종료 메시지 보내기
-                            notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
-                            sseEmitter.complete(); // SSE 연결 종료
+//                            notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
+//                            sseEmitter.complete(); // SSE 연결 종료
                         },
                         ex -> {
                             log.error(ex.getMessage());
-                            notificationService.sendSseEvent(sseEmitter, ex.getMessage());
+                            notificationService.notify(user.getId(), ex.getMessage());
                             // 클라이언트에 SSE 연결 종료 메시지 보내기
-                            notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
-                            sseEmitter.complete(); // SSE 연결 종료
+//                            notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
+//                            sseEmitter.complete(); // SSE 연결 종료
                         }
                 );
             }catch (Exception e){
