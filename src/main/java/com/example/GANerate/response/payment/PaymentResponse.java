@@ -22,6 +22,7 @@ public class PaymentResponse {
         private Long userId;
         private String userName;
         private Long orderId;
+        private Long productId;
     }
 
 }
