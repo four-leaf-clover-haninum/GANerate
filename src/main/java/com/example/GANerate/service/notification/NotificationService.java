@@ -5,6 +5,7 @@ import com.example.GANerate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.io.IOException;
 public class NotificationService {
 
     // 기본 타임아웃 설정 10분
-    private static final Long DEFAULT_TIMEOUT = 0L;
+    private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 60;
 
     private final EmitterRepository emitterRepository;
     private final UserService userService;
@@ -26,6 +27,7 @@ public class NotificationService {
      * @param  - 구독하는 클라이언트의 사용자 아이디.
      * @return SseEmitter - 서버에서 보낸 이벤트 Emitter
      */
+    @Transactional
     public SseEmitter subscribe() {
         Long userId = userService.getCurrentUserId();
         log.info(userId.toString());
@@ -44,6 +46,7 @@ public class NotificationService {
      * @param userId - 메세지를 전송할 사용자의 아이디.
      * @param event  - 전송할 이벤트 객체.
      */
+    @Transactional
     public void notify(Long userId, Object event) {
         sendToClient(userId, event);
     }
@@ -73,7 +76,7 @@ public class NotificationService {
      * @return SseEmitter - 생성된 이벤트 Emitter.
      */
     private SseEmitter createEmitter(Long id) {
-        SseEmitter emitter = new SseEmitter();
+        SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
         emitterRepository.save(id, emitter);
         log.info(emitter.toString());
 
@@ -85,6 +88,7 @@ public class NotificationService {
         return emitter;
     }
 
+    @Transactional
     public String sendSseEvent(SseEmitter emitter, Object event) {
         if (emitter != null) {
             try {
