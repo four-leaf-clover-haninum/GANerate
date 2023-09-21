@@ -30,10 +30,8 @@ public class NotificationService {
      * @param  - 구독하는 클라이언트의 사용자 아이디.
      * @return SseEmitter - 서버에서 보낸 이벤트 Emitter
      */
-    public SseEmitter subscribe() {
-        Long userId = SecurityUtils.getCurrentUserId();
-        // or
-        // tokenProvider.getUserId(token);
+    public SseEmitter subscribe(String token) {
+        Long userId = tokenProvider.getUserId(token);
         log.info(userId.toString());
         SseEmitter emitter = createEmitter(userId);
 
