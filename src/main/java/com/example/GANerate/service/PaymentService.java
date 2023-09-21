@@ -118,7 +118,7 @@ public class PaymentService {
                 .userId(user.getId())
                 .userName(user.getName())
                 .orderId(order.getId())
-                .productId(dataProductId)
+                .dataProductId(dataProductId)
                 .build();
     }
     /**
