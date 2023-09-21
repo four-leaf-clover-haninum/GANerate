@@ -28,9 +28,12 @@ public class NotificationService {
      */
     public SseEmitter subscribe() {
         Long userId = userService.getCurrentUserId();
+        log.info(userId.toString());
         SseEmitter emitter = createEmitter(userId);
 
         sendToClient(userId, "EventStream Created. [userId=" + userId + "]");
+        log.info("finish");
+
         return emitter;
     }
 
