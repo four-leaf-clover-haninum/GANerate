@@ -206,19 +206,21 @@ public class DataProductService {
                             log.info(r.toString());
                             String s = notificationService.sendSseEvent(sseEmitter, r);
                             log.info(s);
+                            // 클라이언트에 SSE 연결 종료 메시지 보내기
+                            notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
+                            sseEmitter.complete(); // SSE 연결 종료
                         },
                         ex -> {
                             log.error(ex.getMessage());
                             notificationService.sendSseEvent(sseEmitter, ex.getMessage());
+                            // 클라이언트에 SSE 연결 종료 메시지 보내기
+                            notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
+                            sseEmitter.complete(); // SSE 연결 종료
                         }
                 );
             }catch (Exception e){
                 e.printStackTrace();
                 throw new CustomException(Result.FAIL_ALRET);
-            }finally {
-                // 클라이언트에 SSE 연결 종료 메시지 보내기
-                notificationService.sendSseEvent(sseEmitter, "close"); // 종료 메시지 전송
-                sseEmitter.complete(); // SSE 연결 종료
             }
         } catch (RestClientException e) {
             throw new CustomException(Result.FAIL_CREATE_DATA);
