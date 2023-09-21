@@ -203,6 +203,7 @@ public class DataProductService {
             try {
                 ganerate.addCallback(
                         r -> {
+                            log.info("callback");
                             log.info(r.toString());
                             notificationService.notify(user.getId(), r);
                             // 클라이언트에 SSE 연결 종료 메시지 보내기
@@ -210,6 +211,7 @@ public class DataProductService {
 //                            sseEmitter.complete(); // SSE 연결 종료
                         },
                         ex -> {
+                            log.info("callback");
                             log.error(ex.getMessage());
                             notificationService.notify(user.getId(), ex.getMessage());
                             // 클라이언트에 SSE 연결 종료 메시지 보내기

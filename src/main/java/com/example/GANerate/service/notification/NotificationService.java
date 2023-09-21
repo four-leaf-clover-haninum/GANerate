@@ -75,6 +75,7 @@ public class NotificationService {
     private SseEmitter createEmitter(Long id) {
         SseEmitter emitter = new SseEmitter();
         emitterRepository.save(id, emitter);
+        log.info(emitter.toString());
 
         // Emitter가 완료될 때(모든 데이터가 성공적으로 전송된 상태) Emitter를 삭제한다.
         emitter.onCompletion(() -> emitterRepository.deleteById(id));
