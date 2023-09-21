@@ -27,7 +27,6 @@ public class NotificationService {
      * @param  - 구독하는 클라이언트의 사용자 아이디.
      * @return SseEmitter - 서버에서 보낸 이벤트 Emitter
      */
-    @Transactional
     public SseEmitter subscribe() {
         Long userId = userService.getCurrentUserId();
         log.info(userId.toString());
@@ -46,7 +45,6 @@ public class NotificationService {
      * @param userId - 메세지를 전송할 사용자의 아이디.
      * @param event  - 전송할 이벤트 객체.
      */
-    @Transactional
     public void notify(Long userId, Object event) {
         sendToClient(userId, event);
     }
