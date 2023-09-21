@@ -63,6 +63,7 @@ public class NotificationService {
         if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event().id(String.valueOf(id)).name("sse").data(data));
+                emitter.send("success");
             } catch (IOException exception) {
                 emitterRepository.deleteById(id);
                 emitter.completeWithError(exception);
