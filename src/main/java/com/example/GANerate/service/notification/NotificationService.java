@@ -2,6 +2,7 @@ package com.example.GANerate.service.notification;
 
 import com.example.GANerate.repository.EmitterRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -9,6 +10,7 @@ import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     // 기본 타임아웃 설정 10분
@@ -79,11 +81,16 @@ public class NotificationService {
     public String sendSseEvent(SseEmitter emitter, Object event) {
         if (emitter != null) {
             try {
+                log.info(event.toString());
                 emitter.send(SseEmitter.event().data(event.toString()));
+                log.info(SseEmitter.event().data(event.toString()).toString());
+                return "Success"; // 반환값을 로그에 출력
             } catch (IOException exception) {
                 emitter.completeWithError(exception);
+                return "Error"; // 예외 발생 시 반환값을 로그에 출력
+
             }
         }
-        return "Success ";
+        return "Emitter is null";
     }
 }
