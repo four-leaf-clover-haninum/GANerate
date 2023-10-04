@@ -105,3 +105,60 @@ GAN알고리즘을 이용한 데이터 유통 플랫폼 'GANerate'
 
 
 ## 📙 프로젝트 내용(Project Description)
+### 프로젝트 배경 및 문제 정의
+- 현재 인터넷 상에는 무수히 많은 이미지가 존재.
+- 다량의 이미지를 효과적으로 얻는 방법이 부재함.
+- 저작권 및 라이선스로 문제가 발생되기도 함.
+
+### 프로젝트 목표
+- 사용자의 Input 이미지 기반 유사한 이미지를 다량 생성할 수 있는 플랫폼 구축
+- 사용자들 간의 이미지 데이터를 거래할 수 있는 서비스 구축
+
+### 담당업무
+- 팀장으로서 프로젝트 일정관리, 기획 및 업무 분담, 발표
+- 서비스 로직 구현
+- DB 설계 및 운영
+- CI/CD 파이프라인 구축 및 배포
+- 비동기 처리를 통한 스레드 자원 관리
+- SSE(Server-Sent Events) 구독을 통한 이벤트 처리
+- AI모델 결과를 서빙하여 사용자에게 제공
+- 캐싱을 적용한 조회 성능 최적화
+- 결제 검증
+
+## 🔍Appendix
+
+### ERD
+<img width="776" alt="GANerate_ERD" src="https://github.com/four-leaf-clover-haninum/GANerate_Backend/assets/112103038/d91a8662-e8f9-43d4-94b8-cddb199c03b0">
+
+### Rest Docs
+[GANerate REST API 문서.pdf](https://github.com/four-leaf-clover-haninum/GANerate_Backend/files/12798685/GANerate.REST.API.-pdf.pdf)
+
+### 상세 이미지
+
+<img width="960" alt="스크린샷 2023-10-04 오전 11 36 25" src="https://github.com/four-leaf-clover-haninum/GANerate_Backend/assets/112103038/ae9ef4e8-5630-47a4-aa7a-21a4e6e40fd9">
+
+- JPA Specification을 이용하여 다중 조건 검색 구현.
+<div><br><br></div>
+
+
+<img width="1687" alt="스크린샷 2023-09-25 오후 6 30 30" src="https://github.com/four-leaf-clover-haninum/GANerate_Backend/assets/112103038/acd1240f-018d-4a35-9c8c-9385b90144e5">
+
+- 데이터 생성 요청 폼을 통해 원하는 수량, 원하는 이미지, 카테고리, 설명등을 작성할 수 있음.
+<div><br><br></div>
+
+<img width="1560" alt="스크린샷 2023-09-25 오후 6 27 55" src="https://github.com/four-leaf-clover-haninum/GANerate_Backend/assets/112103038/1ae1e7c6-e200-42d5-8abe-5b38f1cab85e">
+
+- 아임포트 API를 이용하여 결제 진행 및 검증.
+<div><br><br></div>
+
+<img width="1709" alt="스크린샷 2023-09-25 오후 6 32 49" src="https://github.com/four-leaf-clover-haninum/GANerate_Backend/assets/112103038/5941f8f0-f7a4-4476-8182-458beac87972">
+
+- 상품 생성 완료시 SSE를 통해 클라이언트에게 메세지 전송 및 그에 따른 얼러트 처리
+<div><br><br></div>
+
+<img width="1184" alt="스크린샷 2023-09-25 오후 6 45 36" src="https://github.com/four-leaf-clover-haninum/GANerate_Backend/assets/112103038/3e23cdd1-6bd8-421b-8275-7c48ca77bda6">
+
+- AI를 통해 원하는 수량만큼 생성된 이미지를 64*64 형태로 로컬에 다운로드 된것을 확인할 수 있음.
+<div><br><br></div>
+
+
